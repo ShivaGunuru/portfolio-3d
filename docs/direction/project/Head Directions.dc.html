@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<title>Portfolio — three directions for the head</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Source+Serif+4:opsz,wght@8..60,300..600&family=JetBrains+Mono:wght@400;500&family=Syne:wght@400;600;800&family=IBM+Plex+Sans:wght@300;400;500&family=IBM+Plex+Mono:wght@400&family=Bodoni+Moda:opsz,wght@6..96,400..700&family=Karla:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #101012; }
+  a { color: inherit; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ::selection { background: #3D5AFE; color: #fff; }
+</style>
+</helmet>
+
+<section style="display:flex; flex-direction:column; gap:28px; padding:56px 48px 96px; background:#101012; font-family:'JetBrains Mono',monospace">
+  <div style="display:flex; flex-direction:column; gap:14px; max-width:900px">
+    <div style="font-size:12px; letter-spacing:0.22em; text-transform:uppercase; color:#6E7378">Turn 01 · three directions</div>
+    <div style="font-family:'Archivo',sans-serif; font-variation-settings:'wdth' 118; font-weight:600; font-size:38px; line-height:1.05; color:#E9E6DE">One head, three worlds it could live in.</div>
+    <div style="font-family:'Source Serif 4',serif; font-size:17px; line-height:1.55; color:#9AA0A4; max-width:720px; text-wrap:pretty">Each stage below runs the real treatment on a proxy volume — your scan replaces it. Click a scroll step to drive the head through that section of the journey.</div>
+  </div>
+
+  <div style="display:flex; flex-wrap:wrap; gap:28px; align-items:flex-start">
+
+    <!-- ============ 1a ============ -->
+    <div id="1a" style="width:1120px; background:#F8F7F4; border:1px solid #DCD9D1; display:flex; flex-direction:column">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; padding:20px 32px; border-bottom:1px solid #DCD9D1">
+        <div style="display:flex; gap:16px; align-items:baseline">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.18em; background:#14161A; color:#F8F7F4; padding:5px 9px">1a</span>
+          <span style="font-family:'Archivo',sans-serif; font-variation-settings:'wdth' 120; font-weight:700; font-size:20px; letter-spacing:-0.01em; color:#14161A">CROSS-SECTION</span>
+        </div>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.14em; color:#7A7F84">CLINICAL WHITE · CONTOUR SLICES</span>
+      </div>
+
+      <div style="position:relative; height:620px; background:#F8F7F4; overflow:hidden">
+        <head-stage id="stage-a" treatment="contour" fg="#14161A" accent="#3D5AFE" phase="{{ pa }}" style="position:absolute; inset:0"></head-stage>
+        <div style="position:absolute; left:40px; top:44px; width:400px; display:flex; flex-direction:column; gap:18px; pointer-events:none">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.2em; color:#3D5AFE">SPECIMEN 01 · SHIVA GUNURU</div>
+          <div style="font-family:'Archivo',sans-serif; font-variation-settings:'wdth' 116; font-weight:700; font-size:52px; line-height:0.98; letter-spacing:-0.025em; color:#14161A">AI engineer building systems that put LLMs to real work</div>
+          <div style="font-family:'Source Serif 4',serif; font-size:16px; line-height:1.5; color:#4A4F54; max-width:330px; text-wrap:pretty">Backend-trained, RAG-focused — with a communication edge from years producing video for real clients.</div>
+        </div>
+        <div style="position:absolute; right:40px; bottom:36px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.14em; color:#7A7F84; text-align:right">{{ la }}</div>
+        <div style="position:absolute; left:0; right:0; bottom:0; height:1px; background:#DCD9D1"></div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; border-top:1px solid #DCD9D1">
+        <div style="padding:26px 32px; border-right:1px solid #DCD9D1; display:flex; flex-direction:column; gap:22px">
+          <div style="display:flex; flex-direction:column; gap:10px">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.2em; color:#7A7F84">PALETTE</div>
+            <div style="display:flex; gap:0">
+              <div style="flex:1; display:flex; flex-direction:column; gap:8px"><div style="height:52px; background:#F8F7F4; border:1px solid #DCD9D1"></div><div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#14161A">Paper<br>#F8F7F4</div></div>
+              <div style="flex:1; display:flex; flex-direction:column; gap:8px"><div style="height:52px; background:#E9E6DE"></div><div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#14161A">Bone<br>#E9E6DE</div></div>
+              <div style="flex:1; display:flex; flex-direction:column; gap:8px"><div style="height:52px; background:#7A7F84"></div><div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#14161A">Ash<br>#7A7F84</div></div>
+              <div style="flex:1; display:flex; flex-direction:column; gap:8px"><div style="height:52px; background:#3D5AFE"></div><div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#14161A">Trace<br>#3D5AFE</div></div>
+              <div style="flex:1; display:flex; flex-direction:column; gap:8px"><div style="height:52px; background:#14161A"></div><div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#14161A">Ink<br>#14161A</div></div>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.2em; color:#7A7F84">TYPE</div>
+            <div style="font-family:'Archivo',sans-serif; font-variation-settings:'wdth' 120; font-weight:700; font-size:30px; letter-spacing:-0.02em; color:#14161A">Archivo Expanded</div>
+            <div style="font-family:'Source Serif 4',serif; font-size:16px; line-height:1.5; color:#4A4F54">Source Serif 4 for body — a serif here reads as record-keeping, not editorial warmth. JetBrains Mono rules the labels and measurements.</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.2em; color:#7A7F84">HEAD TREATMENT</div>
+            <div style="font-family:'Source Serif 4',serif; font-size:16px; line-height:1.5; color:#14161A">74 horizontal cross-sections and nothing else. No surface, no shading — the volume exists only where the sections imply it. Every twelfth section is drawn in Trace, so the head is also a ruler.</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.2em; color:#7A7F84">MOBILE</div>
+            <div style="font-family:'Source Serif 4',serif; font-size:16px; line-height:1.5; color:#14161A">No WebGL. Twenty-four sections baked to one SVG; scroll drives vertical offset and opacity only. It loses the yaw and keeps the idea, which is the point of choosing line art.</div>
+          </div>
+        </div>
+        <div style="padding:26px 32px; display:flex; flex-direction:column; gap:12px">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.2em; color:#7A7F84">SCROLL JOURNEY — CLICK TO DRIVE</div>
+          <div onClick="{{ a0 }}" style="cursor:pointer; display:grid; grid-template-columns:52px 1fr; gap:14px; padding:14px 0; border-top:1px solid #DCD9D1" style-hover="background:#EFEDE7">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#3D5AFE">HERO</span>
+            <span style="font-family:'Source Serif 4',serif; font-size:15px; line-height:1.45; color:#14161A">Sections at rest, stacked to their true spacing. A slow half-turn, ±28°. The headline sits left; the head never centres.</span>
+          </div>
+          <div onClick="{{ a1 }}" style="cursor:pointer; display:grid; grid-template-columns:52px 1fr; gap:14px; padding:14px 0; border-top:1px solid #DCD9D1" style-hover="background:#EFEDE7">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#3D5AFE">WORK</span>
+            <span style="font-family:'Source Serif 4',serif; font-size:15px; line-height:1.45; color:#14161A">The stack opens. Four projects pin to four bands of the head — Farmer Helpline at the top section, each title ruling out to the right margin on its own band.</span>
+          </div>
+          <div onClick="{{ a2 }}" style="cursor:pointer; display:grid; grid-template-columns:52px 1fr; gap:14px; padding:14px 0; border-top:1px solid #DCD9D1" style-hover="background:#EFEDE7">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#3D5AFE">ABOUT</span>
+            <span style="font-family:'Source Serif 4',serif; font-size:15px; line-height:1.45; color:#14161A">Sections shear sideways and the head rotates to full profile — the backend-to-AI turn, made literal once and never explained.</span>
+          </div>
+          <div onClick="{{ a3 }}" style="cursor:pointer; display:grid; grid-template-columns:52px 1fr; gap:14px; padding:14px 0; border-top:1px solid #DCD9D1; border-bottom:1px solid #DCD9D1" style-hover="background:#EFEDE7">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#3D5AFE">CONTACT</span>
+            <span style="font-family:'Source Serif 4',serif; font-size:15px; line-height:1.45; color:#14161A">Every section collapses onto one line, which becomes the rule above the footer. Email, GitHub, LinkedIn sit under it.</span>
+          </div>
+          <div style="margin-top:auto; font-family:'Source Serif 4',serif; font-size:15px; line-height:1.5; color:#7A7F84; text-wrap:pretty">The risk: white. Everyone's dark-void reference goes dark; a lab-white void with a blueprint head is the same restraint with the opposite nerve.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 1b ============ -->
+    <div id="1b" style="width:1120px; background:#0B0A14; border:1px solid #221E3C; display:flex; flex-direction:column">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; padding:20px 32px; border-bottom:1px solid #221E3C">
+        <div style="display:flex; gap:16px; align-items:baseline">
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.18em; background:#E8A33D; color:#0B0A14; padding:5px 9px">1b</span>
+          <span style="font-family:'Syne',sans-serif; font-weight:800; font-size:20px; letter-spacing:0.02em; color:#E6E3DC">UTTERANCE</span>
+        </div>
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; color:#6E6AA8">INDIGO FIELD · SPEECH-DRIVEN POINT CLOUD</span>
+      </div>
+
+      <div style="position:relative; height:620px; background:radial-gradient(120% 90% at 62% 42%, #1B1740 0%, #0B0A14 62%); overflow:hidden">
+        <head-stage id="stage-b" treatment="points" fg="#B9B4E8" accent="#E8A33D" phase="{{ pb }}" style="position:absolute; inset:0"></head-stage>
+        <div style="position:absolute; left:44px; top:48px; width:420px; display:flex; flex-direction:column; gap:20px; pointer-events:none">
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.2em; color:#E8A33D">↳ LISTENING</div>
+          <div style="font-family:'Syne',sans-serif; font-weight:800; font-size:50px; line-height:1.0; letter-spacing:-0.02em; color:#E6E3DC">Systems that put LLMs to real work</div>
+          <div style="font-family:'IBM Plex Sans',sans-serif; font-weight:300; font-size:16px; line-height:1.55; color:#9A95C8; max-width:340px; text-wrap:pretty">A farmer speaks in their own language. The answer comes back verified, in the same voice, on one call.</div>
+        </div>
+        <div style="position:absolute; right:44px; bottom:38px; font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; color:#6E6AA8; text-align:right">{{ lb }}</div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; border-top:1px solid #221E3C">
+        <div style="padding:26px 32px; border-right:1px solid #221E3C; display:flex; flex-direction:column; gap:22px">
+          <div style="display:flex; flex-direction:column; gap:10px">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.2em; color:#6E6AA8">PALETTE</div>
+            <div style="display:flex; gap:0">
+              <div style="flex:1; display:flex; flex-direction:column; gap:8px"><div style="height:52px; background:#0B0A14; border:1px solid #221E3C"></div><div style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:#E6E3DC">Void<br>#0B0A14</div></div>
+              <div style="flex:1; display:flex; flex-direction:column; gap:8px"><div style="height:52px; background:#1B1740"></div><div style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:#E6E3DC">Indigo<br>#1B1740</div></div>
+              <div style="flex:1; display:flex; flex-direction:column; gap:8px"><div style="height:52px; background:#6E6AA8"></div><div style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:#E6E3DC">Haze<br>#6E6AA8</div></div>
+              <div style="flex:1; display:flex; flex-direction:column; gap:8px"><div style="height:52px; background:#E8A33D"></div><div style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:#E6E3DC">Amber<br>#E8A33D</div></div>
+              <div style="flex:1; display:flex; flex-direction:column; gap:8px"><div style="height:52px; background:#E6E3DC"></div><div style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:#E6E3DC">Bone<br>#E6E3DC</div></div>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.2em; color:#6E6AA8">TYPE</div>
+            <div style="font-family:'Syne',sans-serif; font-weight:800; font-size:32px; letter-spacing:-0.01em; color:#E6E3DC">Syne Extrabold</div>
+            <div style="font-family:'IBM Plex Sans',sans-serif; font-weight:300; font-size:16px; line-height:1.55; color:#9A95C8">IBM Plex Sans Light for body — engineered, unglamorous, a deliberate flat surface for Syne's odd joints to sit on. Plex Mono for transcripts and labels.</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.2em; color:#6E6AA8">HEAD TREATMENT</div>
+            <div style="font-family:'IBM Plex Sans',sans-serif; font-weight:300; font-size:16px; line-height:1.55; color:#E6E3DC">26,000 points held in a volume, not on a shell — the head reads as a field that happens to be dense in the shape of a face. 12% of the points are amber: the signal inside the noise. It never renders a surface, so it can never look like a failed render.</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.2em; color:#6E6AA8">MOBILE</div>
+            <div style="font-family:'IBM Plex Sans',sans-serif; font-weight:300; font-size:16px; line-height:1.55; color:#E6E3DC">3,000 points on a 2D canvas, no depth sort, no additive blending — the silhouette and the waveform survive, the glow doesn't. Under 380px or reduced-motion: one still frame plus the amber caret.</div>
+          </div>
+        </div>
+        <div style="padding:26px 32px; display:flex; flex-direction:column; gap:12px">
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.2em; color:#6E6AA8">SCROLL JOURNEY — CLICK TO DRIVE</div>
+          <div onClick="{{ b0 }}" style="cursor:pointer; display:grid; grid-template-columns:64px 1fr; gap:14px; padding:14px 0; border-top:1px solid #221E3C" style-hover="background:#161230">
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#E8A33D">HERO</span>
+            <span style="font-family:'IBM Plex Sans',sans-serif; font-weight:300; font-size:15px; line-height:1.5; color:#E6E3DC">Condensed and breathing at 1.6 Hz. Close to still — the whole page is waiting for input.</span>
+          </div>
+          <div onClick="{{ b1 }}" style="cursor:pointer; display:grid; grid-template-columns:64px 1fr; gap:14px; padding:14px 0; border-top:1px solid #221E3C" style-hover="background:#161230">
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#E8A33D">WORK</span>
+            <span style="font-family:'IBM Plex Sans',sans-serif; font-weight:300; font-size:15px; line-height:1.5; color:#E6E3DC">The head scatters into a waveform band and the projects scroll through it. The band is the section divider — no rules, no cards.</span>
+          </div>
+          <div onClick="{{ b2 }}" style="cursor:pointer; display:grid; grid-template-columns:64px 1fr; gap:14px; padding:14px 0; border-top:1px solid #221E3C" style-hover="background:#161230">
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#E8A33D">ABOUT</span>
+            <span style="font-family:'IBM Plex Sans',sans-serif; font-weight:300; font-size:15px; line-height:1.5; color:#E6E3DC">Points re-condense into profile. Reforming from noise is the argument the About copy makes in words — it doesn't need to be said twice.</span>
+          </div>
+          <div onClick="{{ b3 }}" style="cursor:pointer; display:grid; grid-template-columns:64px 1fr; gap:14px; padding:14px 0; border-top:1px solid #221E3C; border-bottom:1px solid #221E3C" style-hover="background:#161230">
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#E8A33D">CONTACT</span>
+            <span style="font-family:'IBM Plex Sans',sans-serif; font-weight:300; font-size:15px; line-height:1.5; color:#E6E3DC">Decay upward into a sparse field. Contact sits in the thinned-out space it leaves behind, amber on void.</span>
+          </div>
+          <div style="margin-top:auto; font-family:'IBM Plex Sans',sans-serif; font-weight:300; font-size:15px; line-height:1.55; color:#6E6AA8; text-wrap:pretty">Closest to the reference in mood, furthest in logic: the motion is voice, not spectacle. Two accents, so it never reads as neon-on-black.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 1c ============ -->
+    <div id="1c" style="width:1120px; background:#9A9287; border:1px solid #7E776D; display:flex; flex-direction:column">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; padding:20px 32px; border-bottom:1px solid #857E74">
+        <div style="display:flex; gap:16px; align-items:baseline">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.18em; background:#1E1A16; color:#E8E2D6; padding:5px 9px">1c</span>
+          <span style="font-family:'Bodoni Moda',serif; font-weight:700; font-size:22px; letter-spacing:0.01em; color:#1E1A16">Cast Room</span>
+        </div>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.14em; color:#3A332C">WARM GREY GALLERY · FACETED PLASTER</span>
+      </div>
+
+      <div style="position:relative; height:620px; background:linear-gradient(180deg,#A79F93 0%,#8E877C 58%,#7C7568 100%); overflow:hidden">
+        <head-stage id="stage-c" treatment="facets" fg="#E8E2D6" accent="#55705F" phase="{{ pc }}" style="position:absolute; inset:0"></head-stage>
+        <div style="position:absolute; left:44px; top:48px; width:400px; display:flex; flex-direction:column; gap:18px; pointer-events:none">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.2em; color:#3A332C">CAT. NO. 01 — PLASTER, 2026</div>
+          <div style="font-family:'Bodoni Moda',serif; font-weight:400; font-size:54px; line-height:1.02; letter-spacing:-0.01em; color:#1E1A16">Systems that put LLMs to real work</div>
+          <div style="font-family:'Karla',sans-serif; font-weight:400; font-size:16px; line-height:1.55; color:#3A332C; max-width:330px; text-wrap:pretty">Backend foundation, retrieval in practice, and a decade of making technical things legible to people who aren't.</div>
+        </div>
+        <div style="position:absolute; right:44px; bottom:38px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.14em; color:#3A332C; text-align:right">{{ lc }}</div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; border-top:1px solid #857E74; background:#A29A8E">
+        <div style="padding:26px 32px; border-right:1px solid #857E74; display:flex; flex-direction:column; gap:22px">
+          <div style="display:flex; flex-direction:column; gap:10px">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.2em; color:#4A4238">PALETTE</div>
+            <div style="display:flex; gap:0">
+              <div style="flex:1; display:flex; flex-direction:column; gap:8px"><div style="height:52px; background:#9A9287"></div><div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#1E1A16">Room<br>#9A9287</div></div>
+              <div style="flex:1; display:flex; flex-direction:column; gap:8px"><div style="height:52px; background:#E8E2D6"></div><div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#1E1A16">Plaster<br>#E8E2D6</div></div>
+              <div style="flex:1; display:flex; flex-direction:column; gap:8px"><div style="height:52px; background:#55705F"></div><div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#1E1A16">Verdigris<br>#55705F</div></div>
+              <div style="flex:1; display:flex; flex-direction:column; gap:8px"><div style="height:52px; background:#3A332C"></div><div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#1E1A16">Umber<br>#3A332C</div></div>
+              <div style="flex:1; display:flex; flex-direction:column; gap:8px"><div style="height:52px; background:#1E1A16"></div><div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#1E1A16">Shadow<br>#1E1A16</div></div>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.2em; color:#4A4238">TYPE</div>
+            <div style="font-family:'Bodoni Moda',serif; font-weight:400; font-size:36px; letter-spacing:-0.01em; color:#1E1A16">Bodoni Moda</div>
+            <div style="font-family:'Karla',sans-serif; font-weight:400; font-size:16px; line-height:1.55; color:#3A332C">Karla for body — a slightly awkward grotesque that keeps the didone from turning into a fashion masthead. JetBrains Mono for catalogue numbers and stacks.</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.2em; color:#4A4238">HEAD TREATMENT</div>
+            <div style="font-family:'Karla',sans-serif; font-weight:400; font-size:16px; line-height:1.55; color:#1E1A16">Matte plaster, flat-shaded so every facet is visible — the stylisation is a manufacturing method, not a filter. One hard key light and a real cast shadow on the floor. It sits on a plinth because a museum cast always does.</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.2em; color:#4A4238">MOBILE</div>
+            <div style="font-family:'Karla',sans-serif; font-weight:400; font-size:16px; line-height:1.55; color:#1E1A16">No renderer at all: five pre-rendered light-sweep frames, cross-faded on scroll, ~180 KB total. Fixed lighting means fixed frames are honest — the desktop and mobile builds show the same object.</div>
+          </div>
+        </div>
+        <div style="padding:26px 32px; display:flex; flex-direction:column; gap:12px">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.2em; color:#4A4238">SCROLL JOURNEY — CLICK TO DRIVE</div>
+          <div onClick="{{ c0 }}" style="cursor:pointer; display:grid; grid-template-columns:64px 1fr; gap:14px; padding:14px 0; border-top:1px solid #857E74" style-hover="background:#ABA396">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#3A332C">HERO</span>
+            <span style="font-family:'Karla',sans-serif; font-size:15px; line-height:1.5; color:#1E1A16">Three-quarter view, key light hard from the left, shadow thrown right across the floor. Nothing moves but a 0.12 rad drift.</span>
+          </div>
+          <div onClick="{{ c1 }}" style="cursor:pointer; display:grid; grid-template-columns:64px 1fr; gap:14px; padding:14px 0; border-top:1px solid #857E74" style-hover="background:#ABA396">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#3A332C">WORK</span>
+            <span style="font-family:'Karla',sans-serif; font-size:15px; line-height:1.5; color:#1E1A16">The light sweeps left to right as you pass the four projects — each one owns a lighting angle, so the same object is a different object per case study.</span>
+          </div>
+          <div onClick="{{ c2 }}" style="cursor:pointer; display:grid; grid-template-columns:64px 1fr; gap:14px; padding:14px 0; border-top:1px solid #857E74" style-hover="background:#ABA396">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#3A332C">ABOUT</span>
+            <span style="font-family:'Karla',sans-serif; font-size:15px; line-height:1.5; color:#1E1A16">Full profile, key light dropped low. The shadow lengthens across the whole section and the About text sets inside it.</span>
+          </div>
+          <div onClick="{{ c3 }}" style="cursor:pointer; display:grid; grid-template-columns:64px 1fr; gap:14px; padding:14px 0; border-top:1px solid #857E74; border-bottom:1px solid #857E74" style-hover="background:#ABA396">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#3A332C">CONTACT</span>
+            <span style="font-family:'Karla',sans-serif; font-size:15px; line-height:1.5; color:#1E1A16">The key light cuts. Only ambient remains — the cast goes flat and grey, and the contact lines are the brightest thing on screen.</span>
+          </div>
+          <div style="margin-top:auto; font-family:'Karla',sans-serif; font-size:15px; line-height:1.55; color:#4A4238; text-wrap:pretty">The furthest from the reference: lit room instead of void, physical object instead of digital effect, light doing the work instead of geometry.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1300,&quot;height&quot;:1400}}">
+class Component extends DCLogic {
+  state = { pa: 0, pb: 0, pc: 0 };
+  labels = {
+    a: ['PHASE 00 — AT REST', 'PHASE 01 — SECTIONS SEPARATE', 'PHASE 02 — SHEAR TO PROFILE', 'PHASE 03 — COLLAPSE TO RULE'],
+    b: ['PHASE 00 — CONDENSED', 'PHASE 01 — SCATTER / WAVEFORM', 'PHASE 02 — RE-FORM, PROFILE', 'PHASE 03 — DECAY'],
+    c: ['PHASE 00 — KEY LEFT', 'PHASE 01 — LIGHT SWEEP', 'PHASE 02 — PROFILE, LOW KEY', 'PHASE 03 — LIGHT OUT']
+  };
+  componentDidMount() {
+    import('./head-stage.js').catch(() => {});
+  }
+  set(k, v) { this.setState({ [k]: v }); }
+  renderVals() {
+    const v = { pa: this.state.pa, pb: this.state.pb, pc: this.state.pc };
+    ['a', 'b', 'c'].forEach((k) => {
+      for (let i = 0; i < 4; i++) v[k + i] = () => this.set('p' + k, i);
+      v['l' + k] = this.labels[k][this.state['p' + k]];
+    });
+    return v;
+  }
+}
+
+</script>
+</body>
+</html>
