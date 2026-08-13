@@ -4,6 +4,7 @@ import { Contact } from './components/sections/Contact'
 import { Hero } from './components/sections/Hero'
 import { Work } from './components/sections/Work'
 import { useSmoothScroll } from './hooks/useSmoothScroll'
+import { SceneCanvas } from './three/SceneCanvas'
 
 export default function App() {
   useSmoothScroll()
@@ -19,11 +20,15 @@ export default function App() {
 
       <SiteHeader />
 
-      {/* The glow sits behind everything and never affects layout. */}
+      {/* The gradient sits behind everything and never affects layout. */}
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(120%_70%_at_68%_26%,var(--color-bg-glow)_0%,var(--color-bg)_58%)]"
       />
+
+      {/* Fixed 3D layer spanning the whole page, above the gradient and below
+          the content. Decorative only. */}
+      <SceneCanvas />
 
       <main id="main" className="relative px-6 sm:px-gutter">
         <Hero />

@@ -1,5 +1,5 @@
 import { hero, site } from '../../content/site'
-import { HeroCanvas } from '../../three/HeroCanvas'
+import { Reveal } from '../Reveal'
 
 export function Hero() {
   return (
@@ -8,11 +8,12 @@ export function Hero() {
       aria-labelledby="hero-heading"
       className="relative flex min-h-svh flex-col justify-center"
     >
-      {/* Decorative layer. Absolutely positioned, so it adds no layout. */}
-      <HeroCanvas />
-
-      <div className="page-shell relative z-10 flex w-full flex-col gap-6 sm:gap-[26px]">
-        <div className="flex max-w-160 flex-col gap-6 sm:gap-[26px]">
+      <div className="page-shell relative z-10 flex w-full flex-col">
+        <Reveal
+          className="flex max-w-160 flex-col gap-6 sm:gap-[26px]"
+          stagger={0.1}
+          delay={0.15}
+        >
           <p className="font-mono text-xs tracking-[0.2em] text-accent uppercase">
             {hero.eyebrow}
           </p>
@@ -42,7 +43,7 @@ export function Hero() {
               {site.email}
             </a>
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   )

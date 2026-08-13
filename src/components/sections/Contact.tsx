@@ -1,4 +1,5 @@
 import { contact, contactLinks } from '../../content/site'
+import { Reveal } from '../Reveal'
 import { SectionHeading } from '../SectionHeading'
 
 export function Contact() {
@@ -14,7 +15,7 @@ export function Contact() {
         meta={contact.meta}
       />
 
-      <div className="flex flex-col gap-9">
+      <Reveal className="flex flex-col gap-9" stagger={0.1}>
         <h3 className="max-w-190 font-display text-[clamp(2.25rem,5vw,4.25rem)] leading-none font-extrabold tracking-[-0.025em] text-balance">
           {contact.headline}
         </h3>
@@ -38,7 +39,7 @@ export function Contact() {
         <p className="mt-10 font-mono text-[11px] tracking-[0.14em] text-faint uppercase">
           {contact.signoff}
         </p>
-      </div>
+      </Reveal>
     </section>
   )
 }

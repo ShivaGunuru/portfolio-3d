@@ -33,6 +33,7 @@
 
   /* 3D */
   --color-head-fg: #b9b4e8; /* head visualisation point colour */
+  --color-head-glow: #ffe3b0; /* tint points take under the cursor */
 
   /* Type */
   --font-display: 'Syne Variable', 'Syne', sans-serif;

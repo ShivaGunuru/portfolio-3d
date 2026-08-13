@@ -1,5 +1,6 @@
 import { projects, work } from '../../content/site'
 import type { Project } from '../../content/site'
+import { Reveal } from '../Reveal'
 import { SectionHeading } from '../SectionHeading'
 
 function ProjectCard({ project, isLast }: { project: Project; isLast: boolean }) {
@@ -14,7 +15,7 @@ function ProjectCard({ project, isLast }: { project: Project; isLast: boolean })
           : 'mb-24 grid gap-10 border-b border-edge pb-24 lg:grid-cols-[minmax(280px,520px)_minmax(280px,1fr)] lg:gap-14'
       }
     >
-      <div className="flex flex-col gap-[18px]">
+      <Reveal className="flex flex-col gap-[18px]" stagger={0.09}>
         <h3
           id={headingId}
           className="font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.02] font-extrabold tracking-[-0.02em]"
@@ -51,9 +52,9 @@ function ProjectCard({ project, isLast }: { project: Project; isLast: boolean })
             {project.status.label}
           </p>
         )}
-      </div>
+      </Reveal>
 
-      <div className="flex flex-col gap-[26px] pt-2">
+      <Reveal className="flex flex-col gap-[26px] pt-2" stagger={0.12}>
         {project.details.map((detail) => (
           <div key={detail.label} className="flex flex-col gap-[7px]">
             <h4 className="font-mono text-[11px] tracking-[0.18em] text-dim uppercase">
@@ -64,7 +65,7 @@ function ProjectCard({ project, isLast }: { project: Project; isLast: boolean })
             </p>
           </div>
         ))}
-      </div>
+      </Reveal>
     </article>
   )
 }

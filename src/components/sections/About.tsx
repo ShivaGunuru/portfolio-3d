@@ -1,6 +1,7 @@
 import { Fragment } from 'react'
 
 import { about } from '../../content/site'
+import { Reveal } from '../Reveal'
 import { SectionHeading } from '../SectionHeading'
 
 /**
@@ -42,7 +43,7 @@ export function About() {
         meta={about.meta}
       />
 
-      <div className="flex max-w-165 flex-col gap-[30px]">
+      <Reveal className="flex max-w-165 flex-col gap-[30px]" stagger={0.1}>
         <p className="font-display text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.25] font-semibold tracking-[-0.015em] text-pretty">
           {about.lead}
         </p>
@@ -55,7 +56,7 @@ export function About() {
             {withHandleLink(paragraph)}
           </p>
         ))}
-      </div>
+      </Reveal>
     </section>
   )
 }

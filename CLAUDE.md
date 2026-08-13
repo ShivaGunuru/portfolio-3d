@@ -56,6 +56,29 @@ Fonts are **self-hosted via `@fontsource`**, never loaded from the Google Fonts 
 
 **Never hardcode a color or font in a component.** Use the utilities, or read the custom property.
 
+## The 3D layer
+
+One point cloud, ~26,000 points (4,000 under 768px), living in a `fixed inset-0` canvas behind the whole page. Files:
+
+| File | Role |
+|---|---|
+| `src/three/headSurface.ts` | Parametric head volume + area-weighted point sampling |
+| `src/three/headShaders.ts` | GLSL. All motion lives here |
+| `src/three/HeadPoints.tsx` | Uniform wiring, easing, group rotation |
+| `src/three/SceneCanvas.tsx` | The fixed canvas, token reading, compact/still modes |
+| `src/hooks/useScrollPhase.ts` | Scroll position → phase 0..3 |
+| `src/hooks/usePointer.ts` | Window pointer → NDC |
+
+**All motion is in the vertex shader, not JavaScript.** The reference implementation in `docs/direction/` mutates 26,000 positions in a JS loop every frame. Adding per-point cursor response on top of that does not hold 60fps. Everything (breathing, scatter, decay, cursor push) is computed per-point on the GPU from `uPhase`, `uTime` and `uPointer`. Measured on Intel UHD 620: 60fps steady, and hovering adds no measurable cost. **Do not move per-point work back into JS.**
+
+**Scroll phase** runs 0..3, one unit per section, driving: 0 head intact → 1 scatter into a wave field → 2 head reformed and turned to profile → 3 points rise and disperse. Section offsets are cached and recomputed on ScrollTrigger refresh; never read `getBoundingClientRect` per frame.
+
+**The cursor test happens in NDC, not world space.** It survives the group's scroll-driven rotation and matches what the user sees on screen rather than what is near in 3D.
+
+**The canvas must stay `pointer-events: none`,** including the inline style passed to `<Canvas>` — R3F writes `pointer-events: auto` on its own container and will otherwise swallow every link on the page. Cursor position comes from a `window` listener, so hover works without the canvas intercepting anything.
+
+**Glow is done in-shader**, via additive blending plus a radial falloff and over-driven colour near the cursor. There is no postprocessing pass and no bloom dependency.
+
 ## Non-negotiables
 
 - **Real DOM content.** Every section must have real, semantic HTML in the DOM independent of the canvas. Headings, paragraphs and links must exist and be readable/crawlable/accessible whether or not WebGL runs. The 3D canvas is a decorative/enhancement layer, never the only place content lives.
