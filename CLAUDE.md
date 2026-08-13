@@ -16,41 +16,31 @@
 
 ## Source of truth — read before touching content or styling
 
-- **[docs/content-inventory.md](docs/content-inventory.md)** is the single source of truth for all site copy: positioning, hero copy, all four project case studies (hook/problem/approach/stack/result), about copy, contact links, and SEO metadata. Read it at the start of any task that touches content. **Never invent or paraphrase copy when the inventory already has it** — use it verbatim. It also lists open items (e.g. Project 1 has no repo yet, LLM/TTS choice undecided) — don't silently resolve these; flag them back to the user.
-- **[docs/direction/](docs/direction/)** holds the locked visual direction — a Claude Design handoff bundle. The primary reference is `docs/direction/project/Utterance - Portfolio.dc.html`, which is the pixel-reference HTML/CSS prototype for the whole site (palette, type scale, spacing, section layout, copy placement). `head-stage.js` is the reference implementation of the 3D head visualization (Three.js, parametric surface, "points" treatment, scroll-driven phase). Read this directory at the start of any task that touches styling or layout. Treat it as locked: match it, don't reinterpret it.
+- **[docs/content-inventory.md](docs/content-inventory.md)** — all site copy: positioning, hero, four project case studies (hook/problem/approach/stack/result), about, contact links, SEO metadata. Read at the start of any task that touches content. It also lists open items (Project 1 has no repo yet, LLM/TTS choice undecided) — don't silently resolve these; flag them back to the user.
+- **[docs/direction/](docs/direction/)** — the locked visual direction, a Claude Design handoff bundle. `docs/direction/project/Utterance - Portfolio.dc.html` is the pixel reference for the whole site (palette, type scale, spacing, section layout, copy placement). `head-stage.js` is the reference implementation of the 3D head (Three.js, parametric surface, "points" treatment, scroll-driven phase). Read at the start of any task that touches styling or layout. Treat it as locked: match it, don't reinterpret it.
 
-## Design tokens (from direction)
+### Copy precedence
 
-Typefaces (Google Fonts: Syne, IBM Plex Sans, IBM Plex Mono):
+The two documents overlap and **their wording differs**. The prototype's copy is the inventory's copy edited to fit the locked layout — tightened throughout, and restructured in About, where the lead line is a display pull-quote whose short length is load-bearing. So:
 
-```js
-// tailwind.config.js — theme.extend
-fontFamily: {
-  display: ['Syne', 'sans-serif'],       // headings — weights 400/600/800, tight tracking, negative letter-spacing
-  sans: ['IBM Plex Sans', 'sans-serif'], // body copy — weights 300/400/500
-  mono: ['IBM Plex Mono', 'monospace'],  // labels, nav, tags, meta — wide letter-spacing (0.1–0.2em), uppercase
-}
-```
+1. **Prototype wording wins where it exists.**
+2. **Inventory is canonical for facts** — links, stack lists, claims — and for anything the prototype doesn't cover.
+3. **Inventory wins on substantive conflict**, as opposed to phrasing.
 
-Palette (deep space-navy background, warm off-white text, single orange accent, purple family for hierarchy):
+**Never invent copy.** Every rendered word must trace back to one of those two documents. In practice this is enforced by `src/content/site.ts`: all copy lives there, and components read from it rather than holding string literals. Add copy to that module, not to JSX.
 
-```js
-// tailwind.config.js — theme.extend.colors
-colors: {
-  bg: '#0B0A14',        // page background
-  'bg-glow': '#1B1740', // radial gradient center behind hero, layered over bg
-  fg: '#E6E3DC',        // primary text (warm off-white)
-  accent: '#E8A33D',    // orange — links on hover, active nav, section labels, selection highlight
-  border: '#221E3C',    // hairline dividers, tag/pill borders
-  muted: '#9A95C8',     // nav links, subline text, secondary labels
-  body: '#C9C5E4',      // problem/approach/result paragraph copy
-  dim: '#6E6AA8',       // section eyebrow labels, tertiary meta text
-  faint: '#413C6E',      // lowest-emphasis text (e.g. footer sign-off line)
-  'head-fg': '#B9B4E8',  // 3D head visualization point color
-}
-```
+## Design tokens
 
-Selection color is `accent` on `bg` (`::selection { background: #E8A33D; color: #0B0A14 }`).
+Tailwind v4 is CSS-first — **there is no `tailwind.config.js`**. Every token is declared in a `@theme` block in **[src/index.css](src/index.css)**, which is the only file in the project where a hex value or font name may appear. Tailwind generates utilities from each token (`--color-bg` → `bg-bg`, `text-bg`) *and* emits it as a real CSS custom property, which is how the Three.js layer reads the same values via `getComputedStyle` instead of keeping a second copy of the palette.
+
+Colors: `bg`, `bg-glow`, `fg`, `body`, `muted`, `dim`, `faint`, `accent`, `edge`, `head-fg`.
+Fonts: `font-display` (Syne), `font-sans` (IBM Plex Sans), `font-mono` (IBM Plex Mono).
+
+Read `src/index.css` for the values and what each is for. Note `edge` is the hairline/border token — not `border`, which would collide with Tailwind's own `border-*` utilities.
+
+Fonts are **self-hosted via `@fontsource`**, never loaded from the Google Fonts CDN — a CDN request sends every visitor's IP to Google, which is live GDPR exposure for a site meant to be found by EU recruiters. Syne and IBM Plex Sans use variable builds; IBM Plex Mono has no variable build, so its 400/500 weights are imported individually.
+
+**Never hardcode a color or font in a component.** Use the utilities, or read the custom property.
 
 ## Non-negotiables
 

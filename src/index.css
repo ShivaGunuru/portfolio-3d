@@ -1,0 +1,96 @@
+@import 'tailwindcss';
+
+/* Self-hosted — no request to fonts.googleapis.com, so no visitor IP leaves
+   for a third party. Syne and IBM Plex Sans ship variable builds; IBM Plex
+   Mono does not, so its weights are imported individually. */
+@import '@fontsource-variable/syne';
+@import '@fontsource-variable/ibm-plex-sans';
+@import '@fontsource/ibm-plex-mono/latin-400.css';
+@import '@fontsource/ibm-plex-mono/latin-500.css';
+
+/* ---------------------------------------------------------------------------
+   Design tokens — from docs/direction/.
+   This is the ONLY file in the project where a hex value or font name appears.
+   Tailwind turns each entry into utilities (--color-bg -> bg-bg / text-bg) and
+   emits it as a real CSS custom property, which is how the Three.js layer reads
+   the same values without a second copy of the palette.
+   --------------------------------------------------------------------------- */
+@theme {
+  /* Surfaces */
+  --color-bg: #0b0a14; /* page background */
+  --color-bg-glow: #1b1740; /* radial gradient centre behind the hero */
+
+  /* Text */
+  --color-fg: #e6e3dc; /* primary — warm off-white */
+  --color-body: #c9c5e4; /* case-study paragraph copy */
+  --color-muted: #9a95c8; /* nav links, subline, secondary labels */
+  --color-dim: #6e6aa8; /* eyebrow labels, tertiary meta */
+  --color-faint: #413c6e; /* lowest emphasis — footer sign-off */
+
+  /* Accent + structure */
+  --color-accent: #e8a33d; /* links on hover, section labels, selection */
+  --color-edge: #221e3c; /* hairline dividers, tag borders */
+
+  /* 3D */
+  --color-head-fg: #b9b4e8; /* head visualisation point colour */
+
+  /* Type */
+  --font-display: 'Syne Variable', 'Syne', sans-serif;
+  --font-sans: 'IBM Plex Sans Variable', 'IBM Plex Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* Layout */
+  --spacing-gutter: 2.5rem; /* 40px — the page's horizontal padding */
+  --container-page: 1440px; /* max content width */
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    /* Anchor targets clear the fixed header instead of hiding behind it. */
+    scroll-padding-top: 6rem;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    font-weight: 300;
+    /* Reserve the scrollbar so mounting content can't shift the layout. */
+    scrollbar-gutter: stable;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background-color: var(--color-accent);
+    color: var(--color-bg);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+
+  /* Non-negotiable: honoured everywhere, not just in CSS. Lenis is never
+     constructed under this preference, and the R3F scene holds still. */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@utility page-shell {
+  max-width: var(--container-page);
+  margin-inline: auto;
+}
