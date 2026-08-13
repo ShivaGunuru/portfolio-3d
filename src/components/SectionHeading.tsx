@@ -12,7 +12,7 @@ interface SectionHeadingProps {
  *
  * The label is an <h2> rather than a styled <span>. Visually identical to the
  * prototype, but it gives each section a real accessible name and keeps the
- * document outline honest — h1 (hero) > h2 (section) > h3 (project).
+ * document outline honest: h1 (hero) > h2 (section) > h3 (project).
  */
 export function SectionHeading({ id, label, meta }: SectionHeadingProps) {
   return (

@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-/* Self-hosted — no request to fonts.googleapis.com, so no visitor IP leaves
+/* Self-hosted, so no request to fonts.googleapis.com, so no visitor IP leaves
    for a third party. Syne and IBM Plex Sans ship variable builds; IBM Plex
    Mono does not, so its weights are imported individually. */
 @import '@fontsource-variable/syne';
@@ -9,7 +9,7 @@
 @import '@fontsource/ibm-plex-mono/latin-500.css';
 
 /* ---------------------------------------------------------------------------
-   Design tokens — from docs/direction/.
+   Design tokens, from docs/direction/.
    This is the ONLY file in the project where a hex value or font name appears.
    Tailwind turns each entry into utilities (--color-bg -> bg-bg / text-bg) and
    emits it as a real CSS custom property, which is how the Three.js layer reads
@@ -21,11 +21,11 @@
   --color-bg-glow: #1b1740; /* radial gradient centre behind the hero */
 
   /* Text */
-  --color-fg: #e6e3dc; /* primary — warm off-white */
+  --color-fg: #e6e3dc; /* primary, warm off-white */
   --color-body: #c9c5e4; /* case-study paragraph copy */
   --color-muted: #9a95c8; /* nav links, subline, secondary labels */
   --color-dim: #6e6aa8; /* eyebrow labels, tertiary meta */
-  --color-faint: #413c6e; /* lowest emphasis — footer sign-off */
+  --color-faint: #413c6e; /* lowest emphasis, footer sign-off */
 
   /* Accent + structure */
   --color-accent: #e8a33d; /* links on hover, section labels, selection */
@@ -40,7 +40,7 @@
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 
   /* Layout */
-  --spacing-gutter: 2.5rem; /* 40px — the page's horizontal padding */
+  --spacing-gutter: 2.5rem; /* 40px, the page's horizontal padding */
   --container-page: 1440px; /* max content width */
 }
 

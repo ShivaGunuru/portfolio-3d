@@ -8,7 +8,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // Three.js is by far the heaviest dependency and changes far less often
-        // than app code — splitting it keeps the app chunk cheap to re-download
+        // than app code, so splitting it keeps the app chunk cheap to re-download
         // when copy changes, instead of invalidating the whole bundle.
         manualChunks(id) {
           if (id.includes('node_modules/three')) return 'three'

@@ -8,7 +8,7 @@ import { PlaceholderShape } from './PlaceholderShape'
  * Reads a design token off the document. Tailwind's `@theme` emits every token
  * in src/index.css as a real CSS custom property, so Three.js can consume the
  * exact same value the utilities are generated from. Changing a colour there
- * changes it here — there is no second copy of the palette.
+ * changes it here. There is no second copy of the palette.
  */
 function readToken(name: string, fallback: string): string {
   if (typeof window === 'undefined') return fallback
@@ -22,7 +22,7 @@ function readToken(name: string, fallback: string): string {
  * The canvas is absolutely positioned and never participates in layout, so it
  * cannot contribute cumulative layout shift no matter when WebGL finishes
  * initialising. It is also inert to pointer events and hidden from assistive
- * technology — the hero's real content is the DOM underneath it.
+ * technology. The hero's real content is the DOM underneath it.
  */
 export function HeroCanvas() {
   const reducedMotion = usePrefersReducedMotion()

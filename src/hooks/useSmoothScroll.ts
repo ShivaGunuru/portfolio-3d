@@ -13,19 +13,19 @@ gsap.registerPlugin(ScrollTrigger)
  *
  * Three wires do that job:
  *
- *  1. `lenis.on('scroll', ScrollTrigger.update)` — Lenis animates scroll
+ *  1. `lenis.on('scroll', ScrollTrigger.update)`: Lenis animates scroll
  *     position itself, so the browser's native scroll event is not a reliable
  *     signal. ScrollTrigger has to be told when Lenis moves, or triggers fire
  *     against a stale position.
  *
- *  2. `gsap.ticker.add(...)` — GSAP's ticker drives `lenis.raf()`. Lenis is
+ *  2. `gsap.ticker.add(...)`: GSAP's ticker drives `lenis.raf()`. Lenis is
  *     deliberately never given its own `requestAnimationFrame` loop; two loops
  *     means two slightly different clocks and visible jitter between
  *     scroll-linked tweens and the scroll itself. GSAP's ticker is in
  *     milliseconds, Lenis expects milliseconds too, but the ticker hands out
- *     seconds — hence `time * 1000`.
+ *     seconds, hence `time * 1000`.
  *
- *  3. `lagSmoothing(0)` — GSAP normally "catches up" after a long frame by
+ *  3. `lagSmoothing(0)`: GSAP normally "catches up" after a long frame by
  *     adjusting its clock. That desynchronises it from Lenis, which does not
  *     do the same. Disabling it keeps both on identical time.
  *
@@ -49,7 +49,7 @@ export function useSmoothScroll(): void {
       easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
       // Touch devices already have good native inertia, and hijacking it costs
-      // battery for no perceived gain — part of the lighter mobile experience.
+      // battery for no perceived gain, part of the lighter mobile experience.
       syncTouch: false,
     })
 

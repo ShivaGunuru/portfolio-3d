@@ -5,7 +5,7 @@ import type { Mesh } from 'three'
 interface PlaceholderShapeProps {
   color: string
   accent: string
-  /** Fewer subdivisions on mobile — the deliberate lighter experience. */
+  /** Fewer subdivisions on mobile, the deliberate lighter experience. */
   detail: number
   /** When true the shape is posed and still rather than animated. */
   still: boolean

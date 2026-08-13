@@ -2,10 +2,10 @@
  * Every word rendered on this site comes from this file.
  *
  * Sources, in precedence order (see CLAUDE.md):
- *  1. docs/direction/project/Utterance - Portfolio.dc.html — wording, where it
+ *  1. docs/direction/project/Utterance - Portfolio.dc.html: wording, where it
  *     exists. It is the same content as the inventory, edited to fit the locked
  *     layout (the About pull-quote in particular only works at its shorter length).
- *  2. docs/content-inventory.md — canonical for facts: links, stack lists,
+ *  2. docs/content-inventory.md, canonical for facts: links, stack lists,
  *     claims, and anything the prototype does not cover. Wins on any
  *     substantive conflict.
  *
@@ -17,7 +17,7 @@ export type ProjectStatus =
   | { kind: 'note'; label: string }
 
 export interface ProjectDetail {
-  /** Small mono label above the paragraph — e.g. PROBLEM, APPROACH, RESULT. */
+  /** Small mono label above the paragraph, e.g. PROBLEM, APPROACH, RESULT. */
   label: string
   body: string
 }
@@ -46,9 +46,9 @@ export interface ContactLink {
 export const site = {
   name: 'Shiva Gunuru',
   role: 'AI Engineer',
-  title: 'Shiva Gunuru — AI Engineer',
+  title: 'Shiva Gunuru | AI Engineer',
   description:
-    'AI engineer with a backend foundation, building RAG and applied LLM systems — plus real project case studies and a content-creation background.',
+    'AI engineer with a backend foundation, building RAG and applied LLM systems, plus real project case studies and a content-creation background.',
   email: 'shiva.gunuru@gmail.com',
 } as const
 
@@ -62,7 +62,7 @@ export const hero = {
   eyebrow: '↳ Listening',
   headline: 'AI engineer building systems that put LLMs to real work',
   subline:
-    'Backend-trained, RAG-focused — with a communication edge from years creating content and producing video for real clients.',
+    'Backend-trained, RAG-focused, with a communication edge from years creating content and producing video for real clients.',
   cta: { href: '#work', label: 'See the work' },
 } as const
 
@@ -75,13 +75,13 @@ export const projects: readonly Project[] = [
   {
     id: 'ai-farmer-helpline',
     title: 'AI Farmer Helpline',
-    hook: 'A single phone call away from verified agricultural advice — no wait times, no guesswork.',
+    hook: 'A single phone call away from verified agricultural advice. No wait times, no guesswork.',
     tags: ['Python', 'faster-whisper', 'ChromaDB', 'Twilio', 'LLM + TTS'],
-    status: { kind: 'note', label: 'In progress — repo not yet public' },
+    status: { kind: 'note', label: 'In progress, repo not yet public' },
     details: [
       {
         label: 'Problem',
-        body: "Farmers rely on informal sources — local contacts, unlicensed advisors — for crop guidance. It's inconsistent, and sometimes closer to superstition than fact. Verified information isn't a phone call away.",
+        body: "Farmers rely on informal sources for crop guidance: local contacts, unlicensed advisors. It's inconsistent, and sometimes closer to superstition than fact. Verified information isn't a phone call away.",
       },
       {
         label: 'Approach',
@@ -89,7 +89,7 @@ export const projects: readonly Project[] = [
       },
       {
         label: 'Where it stands',
-        body: 'Audio preprocessing and speech-to-text built and validated end to end on recorded clips — reliable RMS-based silence detection, frame-by-frame transcription. Retrieval, generation and the live voice loop are the active phase.',
+        body: 'Audio preprocessing and speech-to-text built and validated end to end on recorded clips: reliable RMS-based silence detection, frame-by-frame transcription. Retrieval, generation and the live voice loop are the active phase.',
       },
     ],
   },
@@ -106,15 +106,15 @@ export const projects: readonly Project[] = [
     details: [
       {
         label: 'Problem',
-        body: 'Build a realistic multi-service booking platform with the separation of concerns — payments, ordering, auth — that production systems actually require.',
+        body: 'Build a realistic multi-service booking platform with the separation of concerns (payments, ordering, auth) that production systems actually require.',
       },
       {
         label: 'Approach',
-        body: 'A five-service architecture — separate payment, ordering and authentication/logging services — behind distinct admin and customer interfaces.',
+        body: 'A five-service architecture with separate payment, ordering and authentication/logging services, sitting behind distinct admin and customer interfaces.',
       },
       {
         label: 'Result',
-        body: 'Shipped a working multi-service booking system with full customer and admin flows, built during TCS technical training. Scoped to architecture — no load claims, because none were tested.',
+        body: 'Shipped a working multi-service booking system with full customer and admin flows, built during TCS technical training. Scoped to architecture. No load claims, because none were tested.',
       },
     ],
   },
@@ -176,9 +176,9 @@ export const about = {
   /** Rendered large, as a display pull-quote. Its length is load-bearing. */
   lead: 'I moved from backend into AI because I wanted to build with it directly, not just use it as a chat interface.',
   body: [
-    'That shift is where most of my recent work lives — retrieval-augmented systems, like a voice tool that gives farmers a verified, single-call alternative to unreliable local advice.',
-    "Before AI, I co-ran a video production studio through college — motion graphics and content, short and long form, for clients including a millet-snack food brand and a Dubai-based SaaS company. That background isn't unrelated to the engineering. It's why I don't just ship technically sound systems; I think about how to explain what they do to someone who isn't technical. It's also why I still make AI and tech content today, as @mr.owerthinker.",
-    "Backend gave me the foundation. AI is what I'm building with now. Video and content gave me the ability to make technical work legible — and that combination, not a lack of focus, is the actual advantage.",
+    'That shift is where most of my recent work lives: retrieval-augmented systems, like a voice tool that gives farmers a verified, single-call alternative to unreliable local advice.',
+    "Before AI, I co-ran a video production studio through college, doing motion graphics and content, short and long form, for clients including a millet-snack food brand and a Dubai-based SaaS company. That background isn't unrelated to the engineering. It's why I don't just ship technically sound systems; I think about how to explain what they do to someone who isn't technical. It's also why I still make AI and tech content today, as @mr.owerthinker.",
+    "Backend gave me the foundation. AI is what I'm building with now. Video and content gave me the ability to make technical work legible. That combination, not a lack of focus, is the actual advantage.",
   ],
   /** The handle inside body[1] is linked at render time. */
   handle: { text: '@mr.owerthinker', href: 'https://instagram.com/mr.owerthinker' },
@@ -193,13 +193,13 @@ export const contact = {
 
 export const contactLinks: readonly ContactLink[] = [
   { href: 'mailto:shiva.gunuru@gmail.com', label: 'shiva.gunuru@gmail.com' },
-  { href: 'https://github.com/ShivaGunuru', label: 'GitHub — ShivaGunuru' },
+  { href: 'https://github.com/ShivaGunuru', label: 'GitHub / ShivaGunuru' },
   {
     href: 'https://www.linkedin.com/in/shiva-gunuru-8b015415a/',
-    label: 'LinkedIn — Shiva Gunuru',
+    label: 'LinkedIn / Shiva Gunuru',
   },
   {
     href: 'https://instagram.com/mr.owerthinker',
-    label: 'Instagram & YouTube — @mr.owerthinker',
+    label: 'Instagram & YouTube / @mr.owerthinker',
   },
 ]

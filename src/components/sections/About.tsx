@@ -5,7 +5,7 @@ import { SectionHeading } from '../SectionHeading'
 
 /**
  * The handle appears mid-sentence in the source copy. Splitting on it keeps the
- * paragraph a single string in src/content/site.ts — the copy stays one
+ * paragraph a single string in src/content/site.ts, so the copy stays one
  * traceable unit rather than being chopped into fragments across JSX.
  */
 function withHandleLink(paragraph: string) {

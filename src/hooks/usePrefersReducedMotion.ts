@@ -14,7 +14,7 @@ function getSnapshot() {
 
 /**
  * Server snapshot assumes reduced motion. If this is ever prerendered, the
- * still frame is the safe first paint — motion can start after hydration,
+ * still frame is the safe first paint. Motion can start after hydration,
  * but motion that has to be yanked away cannot be un-shown.
  */
 function getServerSnapshot() {
@@ -22,7 +22,7 @@ function getServerSnapshot() {
 }
 
 /**
- * Live — reacts if the OS preference changes mid-session rather than only
+ * Live: reacts if the OS preference changes mid-session rather than only
  * reading it once at mount.
  */
 export function usePrefersReducedMotion(): boolean {
