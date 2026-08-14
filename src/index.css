@@ -98,3 +98,155 @@
   max-width: var(--container-page);
   margin-inline: auto;
 }
+
+/* ---------------------------------------------------------------------------
+   Bottom marquee.
+
+   Only what utilities cannot express lives here: the keyframes, and the two
+   pseudo-element copies that make up the chromatic split. Layout, type and
+   colour stay in BottomMarquee.tsx as Tailwind utilities.
+
+   Nothing in here needs a `prefers-reduced-motion` branch of its own. The
+   base-layer block above already forces every animation to 0.01ms and a
+   single iteration, which lands each of these on its first keyframe: the
+   track sits still mid-run, and both glitch copies stay at opacity 0. The
+   static glow on `.marquee-run` is a plain declaration rather than a
+   keyframe precisely so it survives that, and the band still reads as
+   designed when it is not allowed to move.
+   --------------------------------------------------------------------------- */
+@layer components {
+  .marquee-track {
+    /* Slow enough to read as atmosphere rather than a stock ticker. */
+    animation: marquee-drift 28s linear infinite;
+  }
+
+  .marquee-run {
+    position: relative;
+    text-shadow:
+      0 0 14px color-mix(in srgb, var(--color-accent) 45%, transparent),
+      0 0 48px color-mix(in srgb, var(--color-accent) 22%, transparent);
+    animation: marquee-glow 4s ease-in-out infinite;
+  }
+
+  /* Both copies sit exactly on top of the real text and stay invisible until
+     the glitch keyframes briefly offset and reveal them, which is what reads
+     as a chromatic split. Sourcing the text from `data-text` keeps it out of
+     the accessibility tree entirely, on top of the wrapper's aria-hidden. */
+  .marquee-run::before,
+  .marquee-run::after {
+    content: attr(data-text);
+    position: absolute;
+    inset: 0;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .marquee-run::before {
+    color: var(--color-accent);
+    clip-path: inset(0 0 55% 0);
+    animation: marquee-glitch-warm 7s steps(1, end) infinite;
+  }
+
+  .marquee-run::after {
+    color: var(--color-head-fg);
+    clip-path: inset(58% 0 0 0);
+    animation: marquee-glitch-cool 7s steps(1, end) infinite;
+  }
+}
+
+/* Travels rightward: content enters from the left edge and exits at the right.
+   The track holds the word run twice, so -50% of the track is exactly one run
+   wide, which puts the second copy where the first began. Start and end frames
+   are therefore pixel-identical and the loop has no visible seam. */
+@keyframes marquee-drift {
+  from {
+    transform: translate3d(-50%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Deliberately out of phase with the 28s drift, so the two never beat together
+   into a pattern the eye can lock onto. */
+@keyframes marquee-glow {
+  0%,
+  100% {
+    text-shadow:
+      0 0 14px color-mix(in srgb, var(--color-accent) 45%, transparent),
+      0 0 48px color-mix(in srgb, var(--color-accent) 22%, transparent);
+  }
+  50% {
+    text-shadow:
+      0 0 22px color-mix(in srgb, var(--color-accent) 62%, transparent),
+      0 0 70px color-mix(in srgb, var(--color-accent) 34%, transparent);
+  }
+}
+
+/* Sparse on purpose. At 7s a cycle, 1% is 70ms, so each burst below lasts
+   about a tenth of a second and the strip is completely still for roughly
+   six of every seven seconds. Constant jitter reads as a broken page;
+   intermittent reads as intentional. `steps(1, end)` keeps the offsets as
+   hard jumps rather than smooth slides. */
+@keyframes marquee-glitch-warm {
+  0%,
+  88% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+  89% {
+    opacity: 0.85;
+    transform: translate3d(-4px, -1px, 0);
+  }
+  90% {
+    opacity: 0.85;
+    transform: translate3d(3px, 1px, 0);
+  }
+  91%,
+  95% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+  96% {
+    opacity: 0.7;
+    transform: translate3d(2px, -2px, 0);
+  }
+  97%,
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Mirrors the warm copy's offsets, which is what separates the two colours
+   into a split instead of a shadow. */
+@keyframes marquee-glitch-cool {
+  0%,
+  88% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+  89% {
+    opacity: 0.8;
+    transform: translate3d(4px, 1px, 0);
+  }
+  90% {
+    opacity: 0.8;
+    transform: translate3d(-3px, -1px, 0);
+  }
+  91%,
+  95% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+  96% {
+    opacity: 0.6;
+    transform: translate3d(-2px, 2px, 0);
+  }
+  97%,
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+}

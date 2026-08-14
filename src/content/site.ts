@@ -191,6 +191,24 @@ export const contact = {
   signoff: '↳ Signal ends',
 } as const
 
+/**
+ * The decorative band that closes the page, below Contact's sign-off.
+ *
+ * These three words are the one deliberate exception to the "every rendered
+ * word traces back to a source document" rule in CLAUDE.md: they appear in
+ * neither the inventory nor the prototype. They are art direction, requested
+ * directly, extending the site's signal motif past `↳ Signal ends` into the
+ * dead air after the transmission. They are not a claim about anything, and
+ * the band is `aria-hidden` so nothing announces them as page content.
+ *
+ * Do not treat this as precedent for adding unsourced copy elsewhere.
+ */
+export const marquee = {
+  words: ['Error', '404', 'Dead end'],
+  /** Sits between words. A middot, since em dashes are banned site-wide. */
+  separator: '·',
+} as const
+
 export const contactLinks: readonly ContactLink[] = [
   { href: 'mailto:shiva.gunuru@gmail.com', label: 'shiva.gunuru@gmail.com' },
   { href: 'https://github.com/ShivaGunuru', label: 'GitHub / ShivaGunuru' },
