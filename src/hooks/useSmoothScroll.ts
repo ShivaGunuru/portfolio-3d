@@ -37,6 +37,17 @@ export function useSmoothScroll(): void {
   const reducedMotion = usePrefersReducedMotion()
 
   useEffect(() => {
+    // Fonts are self-hosted but still load asynchronously (font-display:
+    // swap): the first paint uses a fallback, then the real font swaps in and
+    // reflows the page. Hero's headline is set in Syne at a large clamped
+    // size, so that swap visibly changes Hero's total height. Every pinned
+    // stage's ScrollTrigger measures its boundaries as soon as it mounts,
+    // which can be before this swap happens -- without a refresh afterward,
+    // those boundaries stay pinned to the fallback font's (slightly smaller)
+    // layout, so a nav click's pin-boundary clamp lands just short of where
+    // the pin actually releases under the real, final layout.
+    document.fonts.ready.then(() => ScrollTrigger.refresh())
+
     if (reducedMotion) {
       // Native scroll. Make sure ScrollTrigger is measuring against it.
       ScrollTrigger.refresh()
@@ -87,9 +98,17 @@ export function useSmoothScroll(): void {
       // still-active range. Scrolling there shows the pinned section frozen
       // on screen, overlapping the real target underneath it. Clamp past any
       // pin the computed target would otherwise land inside.
+      //
+      // The +32 is deliberate slack, not just the exact end value: landing
+      // precisely at a computed boundary is fragile against the boundary
+      // itself being off by even a few pixels (a font swap reflowing the
+      // pinned section after ScrollTrigger already measured it, sub-pixel
+      // rounding, and so on), any of which puts the "exact" landing spot back
+      // inside the pin. Both target sections already carry their own 120px of
+      // top padding, so a little extra costs nothing visually.
       for (const trigger of ScrollTrigger.getAll()) {
         if (trigger.pin && targetY > trigger.start && targetY < trigger.end) {
-          targetY = trigger.end
+          targetY = trigger.end + 32
         }
       }
 
