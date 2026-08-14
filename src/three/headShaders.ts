@@ -1,23 +1,25 @@
 /**
- * Vertex shader for the head point cloud.
+ * Vertex shader for a section-scoped head point cloud.
  *
- * Everything the reference implementation did in a per-frame JavaScript loop
- * over 26,000 points happens here instead, once per point, in parallel:
+ * All per-point motion happens here rather than in a per-frame JavaScript
+ * loop, so it stays cheap regardless of point count:
  *
  *   - breathing        a slow per-point radial pulse
- *   - scatter          near phase 1, the head dissolves into a wave field
- *   - decay            from phase 2 on, points rise and drift apart
+ *   - scatter          uScatter interpolates between the formed head (0) and
+ *                       a dissolved wave field (1); the caller decides what
+ *                       that means for a given section
  *   - pointer response points near the cursor push outward and brighten
  *
  * The pointer test is done in normalised device coordinates rather than world
- * space. That means it keeps working regardless of how the group is rotated by
- * the scroll phase, and it matches what the user actually sees on screen: the
- * cursor affects points that look close to it, not points that happen to be
- * near it in 3D but are on the far side of the head.
+ * space. That means it keeps working regardless of how the group is rotated
+ * (the "turn to profile" stage rotates the whole group), and it matches what
+ * the user actually sees on screen: the cursor affects points that look close
+ * to it, not points that happen to be near it in 3D but on the far side of
+ * the head.
  */
 export const headVertexShader = /* glsl */ `
   uniform float uTime;
-  uniform float uPhase;
+  uniform float uScatter;    // 0 = formed head, 1 = fully scattered wave field
   uniform vec2  uPointer;    // cursor in NDC, -1..1
   uniform float uPointerOn;  // 0 when there is no cursor (touch, or left window)
   uniform float uAspect;
@@ -33,25 +35,15 @@ export const headVertexShader = /* glsl */ `
   varying float vGlow;
 
   void main() {
-    float phase   = uPhase;
-    float scatter = max(0.0, 1.0 - abs(phase - 1.0));
-    float decay   = clamp(phase - 2.0, 0.0, 1.0);
-
     // --- morph -------------------------------------------------------------
     float seed = aRandom.y * 6.2831853;
     vec3 pos = position * (1.0 + 0.012 * sin(uTime * 1.6 + seed));
 
-    if (scatter > 0.001) {
+    if (uScatter > 0.001) {
       float wx = position.x * 2.6 + aRandom.x * 0.5;
       float wy = sin(wx * 2.2 + uTime * 1.4) * 0.34 * (0.4 + aRandom.y);
       float wz = position.z * 0.25;
-      pos = mix(pos, vec3(wx, wy, wz), scatter);
-    }
-
-    if (decay > 0.001) {
-      pos.x += decay * aRandom.x * 1.6;
-      pos.y += decay * (0.9 + aRandom.y * 2.4);
-      pos.z += decay * aRandom.z * 0.9;
+      pos = mix(pos, vec3(wx, wy, wz), uScatter);
     }
 
     // --- pointer influence --------------------------------------------------
@@ -83,7 +75,7 @@ export const headVertexShader = /* glsl */ `
     gl_Position = projectionMatrix * viewPos;
 
     // Matches three's own point size attenuation, with a swell near the cursor.
-    float size = uSize * (1.0 + influence * 2.4) * (1.0 - decay * 0.35);
+    float size = uSize * (1.0 + influence * 2.4);
     gl_PointSize = size * (uScale / max(-viewPos.z, 0.0001));
   }
 `

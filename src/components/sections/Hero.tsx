@@ -1,14 +1,22 @@
+import { useRef } from 'react'
+
 import { hero, site } from '../../content/site'
+import { usePinnedStage } from '../../hooks/usePinnedStage'
+import { HeadStage } from '../../three/HeadStage'
 import { Reveal } from '../Reveal'
 
 export function Hero() {
+  const sectionRef = useRef<HTMLElement>(null)
+  const progress = usePinnedStage(sectionRef)
+
   return (
     <section
       id="hero"
       aria-labelledby="hero-heading"
-      className="relative flex min-h-svh flex-col justify-center"
+      ref={sectionRef}
+      className="relative flex min-h-svh flex-col justify-center overflow-hidden"
     >
-      <div className="page-shell relative z-10 flex w-full flex-col">
+      <div className="page-shell relative z-10 grid w-full items-center gap-16 md:grid-cols-2">
         <Reveal
           className="flex max-w-160 flex-col gap-6 sm:gap-[26px]"
           stagger={0.1}
@@ -44,6 +52,12 @@ export function Hero() {
             </a>
           </div>
         </Reveal>
+
+        <HeadStage
+          progress={progress}
+          mode="assemble"
+          className="hidden aspect-square w-full max-w-xl justify-self-center md:block"
+        />
       </div>
     </section>
   )

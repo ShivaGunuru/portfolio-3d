@@ -1,6 +1,8 @@
-import { Fragment } from 'react'
+import { Fragment, useRef } from 'react'
 
 import { about } from '../../content/site'
+import { usePinnedStage } from '../../hooks/usePinnedStage'
+import { HeadStage } from '../../three/HeadStage'
 import { Reveal } from '../Reveal'
 import { SectionHeading } from '../SectionHeading'
 
@@ -31,11 +33,15 @@ function withHandleLink(paragraph: string) {
 }
 
 export function About() {
+  const sectionRef = useRef<HTMLElement>(null)
+  const progress = usePinnedStage(sectionRef)
+
   return (
     <section
       id="about"
       aria-labelledby="about-heading"
-      className="page-shell relative z-10 py-30"
+      ref={sectionRef}
+      className="page-shell relative z-10 overflow-hidden py-30"
     >
       <SectionHeading
         id="about-heading"
@@ -43,20 +49,28 @@ export function About() {
         meta={about.meta}
       />
 
-      <Reveal className="flex max-w-165 flex-col gap-[30px]" stagger={0.1}>
-        <p className="font-display text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.25] font-semibold tracking-[-0.015em] text-pretty">
-          {about.lead}
-        </p>
-
-        {about.body.map((paragraph) => (
-          <p
-            key={paragraph.slice(0, 40)}
-            className="text-[17px] leading-[1.65] font-light text-body text-pretty"
-          >
-            {withHandleLink(paragraph)}
+      <div className="grid items-center gap-16 md:grid-cols-2">
+        <Reveal className="flex max-w-165 flex-col gap-[30px]" stagger={0.1}>
+          <p className="font-display text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.25] font-semibold tracking-[-0.015em] text-pretty">
+            {about.lead}
           </p>
-        ))}
-      </Reveal>
+
+          {about.body.map((paragraph) => (
+            <p
+              key={paragraph.slice(0, 40)}
+              className="text-[17px] leading-[1.65] font-light text-body text-pretty"
+            >
+              {withHandleLink(paragraph)}
+            </p>
+          ))}
+        </Reveal>
+
+        <HeadStage
+          progress={progress}
+          mode="turn"
+          className="hidden aspect-square w-full max-w-xl justify-self-center md:block"
+        />
+      </div>
     </section>
   )
 }

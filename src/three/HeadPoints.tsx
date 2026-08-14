@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, type RefObject } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import {
   AdditiveBlending,
@@ -9,19 +9,32 @@ import {
 } from 'three'
 
 import { usePointer } from '../hooks/usePointer'
-import { useScrollPhase } from '../hooks/useScrollPhase'
 import { headFragmentShader, headVertexShader } from './headShaders'
 import { sampleHeadPoints } from './headSurface'
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 
+export type HeadMode = 'assemble' | 'turn'
+
+/**
+ * How far the head rotates in `turn` mode. Short of a full 90 degrees on
+ * purpose: a true profile points the head edge-on to the fixed front camera,
+ * which reads as empty space rather than a turned head.
+ */
+const TURN_ANGLE = -Math.PI * 0.32
+
+const POINT_COUNT = 18000
+
 interface HeadPointsProps {
   baseColor: string
   accentColor: string
   glowColor: string
-  /** Lighter scene: fewer points, larger, no pointer response. */
-  compact: boolean
-  /** Hold everything still and skip the pointer entirely. */
+  /** 0..1, driven externally by the section's scroll-pin progress. */
+  progress: RefObject<number>
+  /** 'assemble': 0 = scattered wave field, 1 = formed head.
+   *  'turn': head stays formed throughout, rotating from front to profile. */
+  mode: HeadMode
+  /** Hold everything still: no idle motion, no pointer response. */
   still: boolean
 }
 
@@ -29,7 +42,8 @@ export function HeadPoints({
   baseColor,
   accentColor,
   glowColor,
-  compact,
+  progress,
+  mode,
   still,
 }: HeadPointsProps) {
   const group = useRef<Group>(null)
@@ -39,17 +53,12 @@ export function HeadPoints({
   const size = useThree((state) => state.size)
   const dpr = useThree((state) => state.viewport.dpr)
 
-  const interactive = !compact && !still
-  const { pointer, target } = usePointer(interactive)
-  const { sample } = useScrollPhase()
-
-  // Smoothed values, so scroll and hover ease rather than snap.
-  const smoothPhase = useRef(0)
+  const { pointer, target } = usePointer(!still)
   const smoothPointer = useRef({ x: 0, y: 0 })
 
   const data = useMemo(
-    () => sampleHeadPoints(compact ? 4000 : 26000, baseColor, accentColor),
-    [compact, baseColor, accentColor],
+    () => sampleHeadPoints(POINT_COUNT, baseColor, accentColor),
+    [baseColor, accentColor],
   )
 
   const uniforms = useMemo(() => {
@@ -58,11 +67,11 @@ export function HeadPoints({
     const glow = new Color(glowColor)
     return {
       uTime: { value: 0 },
-      uPhase: { value: 0 },
+      uScatter: { value: 0 },
       uPointer: { value: [0, 0] as [number, number] },
       uPointerOn: { value: 0 },
       uAspect: { value: 1 },
-      uSize: { value: compact ? 0.026 : 0.016 },
+      uSize: { value: 0.016 },
       uScale: { value: 400 },
       uRadius: { value: 0.32 },
       uPush: { value: 0.55 },
@@ -70,60 +79,50 @@ export function HeadPoints({
       uGlowColor: { value: [glow.r, glow.g, glow.b] as [number, number, number] },
     }
     // Rebuilding uniforms would drop the current animation state, so this is
-    // intentionally built once per compact/desktop mode only.
-  }, [compact, glowColor])
+    // intentionally built once per colour set only.
+  }, [glowColor])
 
   useFrame((state, delta) => {
     const mat = material.current
     if (!mat) return
 
-    // Clamp: a backgrounded tab resumes with a huge delta, which would fling
-    // the eased values past their targets in a single visible jump.
-    const step = Math.min(delta, 1 / 30)
+    const p = progress.current
 
     if (still) {
       mat.uniforms.uTime.value = 0
-      mat.uniforms.uPhase.value = 0
+      mat.uniforms.uScatter.value = mode === 'assemble' ? 1 - p : 0
       mat.uniforms.uPointerOn.value = 0
-      if (group.current) group.current.rotation.y = 0
+      if (group.current) {
+        group.current.rotation.y = mode === 'turn' ? TURN_ANGLE * p : 0
+      }
       return
     }
 
+    // Clamp: a backgrounded tab resumes with a huge delta, which would fling
+    // the eased pointer position past its target in a single visible jump.
+    const step = Math.min(delta, 1 / 30)
+
     mat.uniforms.uTime.value = state.clock.elapsedTime
+    mat.uniforms.uScatter.value = mode === 'assemble' ? 1 - p : 0
 
-    // --- scroll phase -------------------------------------------------------
-    const phase = sample()
-    smoothPhase.current = lerp(smoothPhase.current, phase, 1 - Math.pow(0.001, step))
-    const p = smoothPhase.current
-    mat.uniforms.uPhase.value = p
-
-    // Idle sway that turns into a deliberate quarter-turn to profile as the
-    // reader moves into About, then holds while the cloud disperses.
-    const decay = Math.min(Math.max(p - 2, 0), 1)
-    const turn = Math.min(Math.max(p - 1, 0), 1) * (1 - decay)
     if (group.current) {
-      group.current.rotation.y = lerp(
-        Math.sin(state.clock.elapsedTime * 0.16) * 0.55,
-        -Math.PI / 2,
-        turn,
-      )
+      group.current.rotation.y =
+        mode === 'turn'
+          ? lerp(0, TURN_ANGLE, p)
+          : Math.sin(state.clock.elapsedTime * 0.16) * 0.35
     }
-
-    mat.uniforms.uOpacity.value = 0.85 * (1 - decay * 0.72)
 
     // --- pointer ------------------------------------------------------------
-    if (interactive) {
-      const ease = 1 - Math.pow(0.0015, step)
-      smoothPointer.current.x = lerp(smoothPointer.current.x, pointer.current.x, ease)
-      smoothPointer.current.y = lerp(smoothPointer.current.y, pointer.current.y, ease)
+    const ease = 1 - Math.pow(0.0015, step)
+    smoothPointer.current.x = lerp(smoothPointer.current.x, pointer.current.x, ease)
+    smoothPointer.current.y = lerp(smoothPointer.current.y, pointer.current.y, ease)
 
-      const uPointer = mat.uniforms.uPointer.value as [number, number]
-      uPointer[0] = smoothPointer.current.x
-      uPointer[1] = smoothPointer.current.y
+    const uPointer = mat.uniforms.uPointer.value as [number, number]
+    uPointer[0] = smoothPointer.current.x
+    uPointer[1] = smoothPointer.current.y
 
-      pointer.current.active = lerp(pointer.current.active, target.current, ease)
-      mat.uniforms.uPointerOn.value = pointer.current.active
-    }
+    pointer.current.active = lerp(pointer.current.active, target.current, ease)
+    mat.uniforms.uPointerOn.value = pointer.current.active
 
     // --- viewport -----------------------------------------------------------
     mat.uniforms.uAspect.value = size.width / size.height

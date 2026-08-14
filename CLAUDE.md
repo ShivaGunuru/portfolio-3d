@@ -58,24 +58,28 @@ Fonts are **self-hosted via `@fontsource`**, never loaded from the Google Fonts 
 
 ## The 3D layer
 
-One point cloud, ~26,000 points (4,000 under 768px), living in a `fixed inset-0` canvas behind the whole page. Files:
+**There is no page-wide canvas.** Two independent "stages" live inside their own section's layout column: Hero (mode `assemble`) and About (mode `turn`). Work and Contact have no 3D. Each stage is pinned via GSAP ScrollTrigger while its section is in view — the viewport holds in place and the scroll gesture drives that section's animation to completion (progress 0→1), then the section unpins and normal scrolling continues. This replaced an earlier single full-page fixed background layer; if you find references to that design elsewhere, they're stale.
 
 | File | Role |
 |---|---|
 | `src/three/headSurface.ts` | Parametric head volume + area-weighted point sampling |
-| `src/three/headShaders.ts` | GLSL. All motion lives here |
-| `src/three/HeadPoints.tsx` | Uniform wiring, easing, group rotation |
-| `src/three/SceneCanvas.tsx` | The fixed canvas, token reading, compact/still modes |
-| `src/hooks/useScrollPhase.ts` | Scroll position → phase 0..3 |
+| `src/three/headShaders.ts` | GLSL. All per-point motion lives here |
+| `src/three/HeadPoints.tsx` | Uniform wiring, easing, group rotation; takes `progress` + `mode` as props, computes nothing about scroll itself |
+| `src/three/HeadStage.tsx` | The section-scoped canvas: token reading, mobile-hide, IntersectionObserver-gated frame loop |
+| `src/hooks/usePinnedStage.ts` | GSAP ScrollTrigger `pin: true, scrub: true` on a section ref → a 0..1 progress ref |
 | `src/hooks/usePointer.ts` | Window pointer → NDC |
 
-**All motion is in the vertex shader, not JavaScript.** The reference implementation in `docs/direction/` mutates 26,000 positions in a JS loop every frame. Adding per-point cursor response on top of that does not hold 60fps. Everything (breathing, scatter, decay, cursor push) is computed per-point on the GPU from `uPhase`, `uTime` and `uPointer`. Measured on Intel UHD 620: 60fps steady, and hovering adds no measurable cost. **Do not move per-point work back into JS.**
+**All per-point motion is in the vertex shader, not JavaScript.** The reference implementation in `docs/direction/` mutates thousands of positions in a JS loop every frame. Adding per-point cursor response on top of that does not hold 60fps. Breathing, scatter and cursor push are computed per-point on the GPU from `uScatter`, `uTime` and `uPointer`. Measured on Intel UHD 620: 60fps steady at 26,000 points in a single stage, and hovering adds no measurable cost. **Do not move per-point work back into JS.** 18,000 points per stage now that two can exist; each stage's `frameloop` drops to `'demand'` while off-screen, so an unpinned stage isn't still paying full render cost.
 
-**Scroll phase** runs 0..3, one unit per section, driving: 0 head intact → 1 scatter into a wave field → 2 head reformed and turned to profile → 3 points rise and disperse. Section offsets are cached and recomputed on ScrollTrigger refresh; never read `getBoundingClientRect` per frame.
+**`uScatter` is a plain 0..1 shader value, not a scroll phase.** `HeadPoints` decides what it means per `mode`: `assemble` maps it directly to `1 - progress` (formed at progress 1); `turn` holds it at 0 (head never dissolves) and instead rotates the group from front-facing to `TURN_ANGLE`. `TURN_ANGLE` is deliberately short of a full 90°, since a true profile points the head edge-on to the fixed front camera and reads as empty space, not a turned head.
 
-**The cursor test happens in NDC, not world space.** It survives the group's scroll-driven rotation and matches what the user sees on screen rather than what is near in 3D.
+**Pinning is compatible with Lenis's default configuration** (`wrapper: window`, native scrollTop, no transformed wrapper div), so `pin: true` works with GSAP's default `pinType: 'fixed'` and needs no extra config. Confirmed by reading Lenis's source, not just its docs. `scrub: true` (not a numeric lerp) is deliberate: Lenis already smooths scroll, so a second lerp on top would compound lag.
 
-**The canvas must stay `pointer-events: none`,** including the inline style passed to `<Canvas>` — R3F writes `pointer-events: auto` on its own container and will otherwise swallow every link on the page. Cursor position comes from a `window` listener, so hover works without the canvas intercepting anything.
+**Both stages are hidden entirely under 768px**, not shrunk. Pinning plus a mobile browser's address-bar show/hide resize is a well-known source of jank; per the mobile non-negotiable below, the right answer is no 3D there, not a smaller/glitchier version of it.
+
+**The cursor test happens in NDC, not world space.** It survives the group's scroll-driven rotation and matches what the user sees on screen rather than what is near in 3D. Hover stays active throughout the pinned animation (a deliberate choice, not an oversight) — it's a separate uniform from `uScatter`/rotation, so both run simultaneously without conflict.
+
+**Every canvas must stay `pointer-events: none`,** including the inline `style` passed to `<Canvas>` — R3F writes `pointer-events: auto` on its own container and will otherwise swallow clicks near it. Cursor position comes from a `window` listener, so hover works without the canvas intercepting anything.
 
 **Glow is done in-shader**, via additive blending plus a radial falloff and over-driven colour near the cursor. There is no postprocessing pass and no bloom dependency.
 
