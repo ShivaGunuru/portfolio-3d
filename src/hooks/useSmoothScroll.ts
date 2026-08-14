@@ -89,12 +89,18 @@ export function useSmoothScroll(): void {
 
       event.preventDefault()
 
-      let targetY =
-        target.getBoundingClientRect().top + window.scrollY - 96
+      // No header-clearance offset here: every nav target (#work, #about,
+      // #contact) is a section with its own 120px top padding (pt-30),
+      // which already clears the 64px fixed header with room to spare.
+      // Subtracting a header offset on top of that padding used to leave a
+      // section landing ~200px short of its heading, with the tail of the
+      // previous section still peeking out under the header, which read as
+      // the scroll having stopped short.
+      let targetY = target.getBoundingClientRect().top + window.scrollY
 
       // A section that immediately follows a pinned one (Work after Hero,
-      // Contact after About) sits exactly at that pin's release point, so the
-      // -96 header offset above pulls the landing spot back inside the pin's
+      // Contact after About) sits exactly at that pin's release point, so a
+      // computed target at or near that point can land inside the pin's
       // still-active range. Scrolling there shows the pinned section frozen
       // on screen, overlapping the real target underneath it. Clamp past any
       // pin the computed target would otherwise land inside.
