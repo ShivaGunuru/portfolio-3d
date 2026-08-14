@@ -36,6 +36,9 @@ interface HeadPointsProps {
   mode: HeadMode
   /** Hold everything still: no idle motion, no pointer response. */
   still: boolean
+  /** The stage's own DOM container, so pointer NDC is computed relative to
+   *  this canvas's box rather than the whole window. */
+  containerRef: RefObject<HTMLElement | null>
 }
 
 export function HeadPoints({
@@ -45,6 +48,7 @@ export function HeadPoints({
   progress,
   mode,
   still,
+  containerRef,
 }: HeadPointsProps) {
   const group = useRef<Group>(null)
   const points = useRef<Points>(null)
@@ -53,7 +57,7 @@ export function HeadPoints({
   const size = useThree((state) => state.size)
   const dpr = useThree((state) => state.viewport.dpr)
 
-  const { pointer, target } = usePointer(!still)
+  const { pointer, target } = usePointer(!still, containerRef)
   const smoothPointer = useRef({ x: 0, y: 0 })
 
   const data = useMemo(

@@ -91,6 +91,7 @@ export function HeadStage({ progress, mode, className }: HeadStageProps) {
           progress={progress}
           mode={mode}
           still={reducedMotion}
+          containerRef={container}
         />
       </Canvas>
     </div>

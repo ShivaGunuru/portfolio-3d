@@ -77,12 +77,28 @@ export function useSmoothScroll(): void {
       if (!target) return
 
       event.preventDefault()
+
+      let targetY =
+        target.getBoundingClientRect().top + window.scrollY - 96
+
+      // A section that immediately follows a pinned one (Work after Hero,
+      // Contact after About) sits exactly at that pin's release point, so the
+      // -96 header offset above pulls the landing spot back inside the pin's
+      // still-active range. Scrolling there shows the pinned section frozen
+      // on screen, overlapping the real target underneath it. Clamp past any
+      // pin the computed target would otherwise land inside.
+      for (const trigger of ScrollTrigger.getAll()) {
+        if (trigger.pin && targetY > trigger.start && targetY < trigger.end) {
+          targetY = trigger.end
+        }
+      }
+
       // `lock` holds the programmatic animation through to completion even if
       // Lenis picks up incoming scroll input mid-flight, e.g. residual wheel or
       // trackpad momentum still arriving right after the click. Without it,
       // that input reads as "the user wants to scroll" and cuts the tween
       // short wherever it happened to be, landing well short of the section.
-      lenis.scrollTo(target as HTMLElement, { offset: -96, lock: true })
+      lenis.scrollTo(targetY, { lock: true })
       // Keep the URL and focus behaviour of a real anchor.
       history.pushState(null, '', id)
     }

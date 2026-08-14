@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type RefObject } from 'react'
 
 export interface PointerState {
   /** Cursor in normalised device coordinates, -1..1. */
@@ -9,18 +9,27 @@ export interface PointerState {
 }
 
 /**
- * Tracks the cursor for the 3D layer.
+ * Tracks the cursor for a single 3D stage, in coordinates local to that
+ * stage's own container element rather than the whole window.
  *
- * Listening on `window` rather than on the canvas is deliberate. The canvas is
- * `pointer-events: none` so it cannot swallow clicks on the links underneath
- * it, which also means it never receives pointer events of its own. Watching
- * the window gives the scene the cursor position without putting a
- * click-blocking surface over the whole page.
+ * Each stage's canvas is a small box inside its section's layout, not a
+ * page-filling background, so NDC has to be computed against that box's own
+ * bounding rect. Getting this wrong doesn't error, it just silently offsets
+ * the hit region: the interaction still happens, but wherever the cursor
+ * would be if the box were the full window, not where the cursor visually is.
  *
- * State lives in a ref, not React state: this updates every mouse move and must
- * never trigger a re-render.
+ * Listening on `window` rather than on the canvas itself is still correct
+ * even with a local rect: the canvas is `pointer-events: none` so it cannot
+ * swallow clicks on the links underneath it, which also means it never
+ * receives pointer events of its own.
+ *
+ * State lives in a ref, not React state: this updates every mouse move and
+ * must never trigger a re-render.
  */
-export function usePointer(enabled: boolean) {
+export function usePointer(
+  enabled: boolean,
+  containerRef: RefObject<HTMLElement | null>,
+) {
   const pointer = useRef<PointerState>({ x: 0, y: 0, active: 0 })
   /** Where `active` is heading. The shader eases toward it. */
   const target = useRef(0)
@@ -38,8 +47,26 @@ export function usePointer(enabled: boolean) {
         target.current = 0
         return
       }
-      pointer.current.x = (event.clientX / window.innerWidth) * 2 - 1
-      pointer.current.y = -((event.clientY / window.innerHeight) * 2 - 1)
+
+      const el = containerRef.current
+      if (!el) {
+        target.current = 0
+        return
+      }
+
+      const rect = el.getBoundingClientRect()
+      const localX = event.clientX - rect.left
+      const localY = event.clientY - rect.top
+
+      // Outside this stage's own box: no interaction, even if the cursor is
+      // elsewhere on the page (over text, or over a different stage).
+      if (localX < 0 || localX > rect.width || localY < 0 || localY > rect.height) {
+        target.current = 0
+        return
+      }
+
+      pointer.current.x = (localX / rect.width) * 2 - 1
+      pointer.current.y = -((localY / rect.height) * 2 - 1)
       target.current = 1
     }
 
@@ -56,7 +83,7 @@ export function usePointer(enabled: boolean) {
       document.removeEventListener('pointerleave', onLeave)
       window.removeEventListener('blur', onLeave)
     }
-  }, [enabled])
+  }, [enabled, containerRef])
 
   return { pointer, target }
 }
