@@ -77,7 +77,12 @@ export function useSmoothScroll(): void {
       if (!target) return
 
       event.preventDefault()
-      lenis.scrollTo(target as HTMLElement, { offset: -96 })
+      // `lock` holds the programmatic animation through to completion even if
+      // Lenis picks up incoming scroll input mid-flight, e.g. residual wheel or
+      // trackpad momentum still arriving right after the click. Without it,
+      // that input reads as "the user wants to scroll" and cuts the tween
+      // short wherever it happened to be, landing well short of the section.
+      lenis.scrollTo(target as HTMLElement, { offset: -96, lock: true })
       // Keep the URL and focus behaviour of a real anchor.
       history.pushState(null, '', id)
     }
