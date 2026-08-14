@@ -47,7 +47,14 @@
 
 @layer base {
   html {
-    scroll-behavior: smooth;
+    /* Lenis owns smooth scrolling and writes scrollTop every frame. Leaving
+       this "smooth" makes the browser layer its own scroll animation on top of
+       Lenis's, and the two fight: Lenis's tween gets cut short and nav clicks
+       land partway to the target instead of gliding all the way there. Native
+       anchor jumps (the no-JS fallback) are instant instead, which is the
+       correct trade: no JS also means no Lenis, so there is nothing left to
+       conflict with. */
+    scroll-behavior: auto;
     /* Anchor targets clear the fixed header instead of hiding behind it. */
     scroll-padding-top: 6rem;
     -webkit-text-size-adjust: 100%;
@@ -76,10 +83,6 @@
   /* Non-negotiable: honoured everywhere, not just in CSS. Lenis is never
      constructed under this preference, and the R3F scene holds still. */
   @media (prefers-reduced-motion: reduce) {
-    html {
-      scroll-behavior: auto;
-    }
-
     *,
     *::before,
     *::after {
