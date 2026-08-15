@@ -1,4 +1,4 @@
-import { useMemo, useRef, type RefObject } from 'react'
+import { useEffect, useMemo, useRef, type RefObject } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import {
   AdditiveBlending,
@@ -11,17 +11,32 @@ import {
 import { usePointer } from '../hooks/usePointer'
 import { headFragmentShader, headVertexShader } from './headShaders'
 import { sampleHeadPoints } from './headSurface'
+import type { PortraitPointData } from './portraitSampler'
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 
 export type HeadMode = 'assemble' | 'turn'
 
 /**
- * How far the head rotates in `turn` mode. Short of a full 90 degrees on
- * purpose: a true profile points the head edge-on to the fixed front camera,
- * which reads as empty space rather than a turned head.
+ * How far the parametric head rotates in `turn` mode. Short of a full 90
+ * degrees on purpose: a true profile points the head edge-on to the fixed
+ * front camera, which reads as empty space rather than a turned head.
  */
 const TURN_ANGLE = -Math.PI * 0.32
+
+/**
+ * The portrait turns considerably less.
+ *
+ * A photograph sampled into points is a bas-relief, not a closed volume: it
+ * has a front and nothing behind it. Rotating it as far as the parametric head
+ * would swing the flat side toward the camera and give the illusion away.
+ * A shallow angle instead reads as parallax on a solid form.
+ */
+const PORTRAIT_TURN_ANGLE = -Math.PI * 0.11
+
+/** Idle sway amplitude, same reasoning as the turn angles above. */
+const IDLE_SWAY = 0.35
+const PORTRAIT_IDLE_SWAY = 0.12
 
 const POINT_COUNT = 18000
 
@@ -39,6 +54,11 @@ interface HeadPointsProps {
   /** The stage's own DOM container, so pointer NDC is computed relative to
    *  this canvas's box rather than the whole window. */
   containerRef: RefObject<HTMLElement | null>
+  /**
+   * Sampled portrait photo. When absent the parametric head is used instead,
+   * so the stage still renders if the photo is missing or fails to decode.
+   */
+  portrait?: PortraitPointData | null
 }
 
 export function HeadPoints({
@@ -49,6 +69,7 @@ export function HeadPoints({
   mode,
   still,
   containerRef,
+  portrait,
 }: HeadPointsProps) {
   const group = useRef<Group>(null)
   const points = useRef<Points>(null)
@@ -56,14 +77,21 @@ export function HeadPoints({
 
   const size = useThree((state) => state.size)
   const dpr = useThree((state) => state.viewport.dpr)
+  const invalidate = useThree((state) => state.invalidate)
 
   const { pointer, target } = usePointer(!still, containerRef)
   const smoothPointer = useRef({ x: 0, y: 0 })
 
-  const data = useMemo(
+  const fallback = useMemo(
     () => sampleHeadPoints(POINT_COUNT, baseColor, accentColor),
     [baseColor, accentColor],
   )
+
+  const data = portrait ?? fallback
+  const isPortrait = Boolean(portrait)
+
+  const turnAngle = isPortrait ? PORTRAIT_TURN_ANGLE : TURN_ANGLE
+  const idleSway = isPortrait ? PORTRAIT_IDLE_SWAY : IDLE_SWAY
 
   const uniforms = useMemo(() => {
     // Converted the same way the point colours are, so the glow tint and the
@@ -86,6 +114,17 @@ export function HeadPoints({
     // intentionally built once per colour set only.
   }, [glowColor])
 
+  // The portrait samples on a denser, flatter grid than the parametric head,
+  // so its points want to be smaller to avoid reading as a solid sheet.
+  useEffect(() => {
+    const mat = material.current
+    if (!mat) return
+    mat.uniforms.uSize.value = isPortrait ? 0.011 : 0.016
+    // Under reduced motion or off-screen the frame loop is on demand, so a
+    // newly loaded cloud would otherwise never be drawn.
+    invalidate()
+  }, [isPortrait, data, invalidate])
+
   useFrame((state, delta) => {
     const mat = material.current
     if (!mat) return
@@ -97,7 +136,7 @@ export function HeadPoints({
       mat.uniforms.uScatter.value = mode === 'assemble' ? 1 - p : 0
       mat.uniforms.uPointerOn.value = 0
       if (group.current) {
-        group.current.rotation.y = mode === 'turn' ? TURN_ANGLE * p : 0
+        group.current.rotation.y = mode === 'turn' ? turnAngle * p : 0
       }
       return
     }
@@ -112,8 +151,8 @@ export function HeadPoints({
     if (group.current) {
       group.current.rotation.y =
         mode === 'turn'
-          ? lerp(0, TURN_ANGLE, p)
-          : Math.sin(state.clock.elapsedTime * 0.16) * 0.35
+          ? lerp(0, turnAngle, p)
+          : Math.sin(state.clock.elapsedTime * 0.16) * idleSway
     }
 
     // --- pointer ------------------------------------------------------------
@@ -141,7 +180,10 @@ export function HeadPoints({
         // culler's cached bounding sphere would wrongly cull the whole cloud.
         frustumCulled={false}
       >
-        <bufferGeometry>
+        {/* Keyed on the point count: when the portrait finishes loading it
+            replaces a differently sized cloud, and reusing the existing
+            geometry would leave attributes and draw range mismatched. */}
+        <bufferGeometry key={data.count}>
           <bufferAttribute
             attach="attributes-position"
             args={[data.positions, 3]}

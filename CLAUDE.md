@@ -62,12 +62,28 @@ Fonts are **self-hosted via `@fontsource`**, never loaded from the Google Fonts 
 
 | File | Role |
 |---|---|
-| `src/three/headSurface.ts` | Parametric head volume + area-weighted point sampling |
+| `src/three/portraitSampler.ts` | Photo → point cloud. Gradient-aware background rejection, depth envelope, palette recolour |
+| `src/three/headSurface.ts` | Parametric head volume + area-weighted point sampling. **Fallback only** |
 | `src/three/headShaders.ts` | GLSL. All per-point motion lives here |
-| `src/three/HeadPoints.tsx` | Uniform wiring, easing, group rotation; takes `progress` + `mode` as props, computes nothing about scroll itself |
-| `src/three/HeadStage.tsx` | The section-scoped canvas: token reading, mobile-hide, IntersectionObserver-gated frame loop |
+| `src/three/HeadPoints.tsx` | Uniform wiring, easing, group rotation; takes `progress` + `mode` + optional `portrait` as props, computes nothing about scroll itself |
+| `src/three/HeadStage.tsx` | The section-scoped canvas: token reading, mobile-hide, IntersectionObserver-gated frame loop, portrait loading |
+| `src/hooks/usePortraitPoints.ts` | Loads the portrait photo, samples it, degrades to `unavailable` on any failure |
 | `src/hooks/usePinnedStage.ts` | GSAP ScrollTrigger `pin: true, scrub: true` on a section ref → a 0..1 progress ref |
 | `src/hooks/usePointer.ts` | Window pointer → NDC |
+
+### The point cloud is a photograph
+
+Both stages sample **`public/images/portrait.{jpg,png}`** into points, so the head is the subject's actual likeness rather than a generic form. See [`public/images/README.md`](public/images/README.md) for how to swap the photo and every tuning constant.
+
+**The parametric head is now a fallback, not the primary.** If the photo is missing or undecodable, `usePortraitPoints` reports `unavailable` and `HeadPoints` renders `sampleHeadPoints` instead. The 3D layer is decorative, so a missing asset must never be able to break the page. Don't delete `headSurface.ts`.
+
+**Missing files can return HTTP 200.** Vite's dev server answers an absent `/images/portrait.jpg` with `index.html` and a 200 status. The loader therefore keys off `Image.onerror`, which correctly rejects undecodable content, rather than checking the response status, which would be fooled. Verified directly. Don't "improve" this into a `fetch`-status check.
+
+**The portrait is a bas-relief, not a closed volume.** It has a front and nothing behind it, so it rotates far less than the parametric head did: `PORTRAIT_TURN_ANGLE` and `PORTRAIT_IDLE_SWAY` in `HeadPoints.tsx` are deliberately small. Raising them swings the flat side toward the camera.
+
+**Colours are remapped into the palette by luminance**, not taken from the photo, so the locked visual direction survives a full-colour source. `colorMode: 'photo'` opts out.
+
+**Each stage exposes `data-portrait` and `data-points`** on its container, so whether the photo loaded is inspectable rather than guessed at.
 
 **All per-point motion is in the vertex shader, not JavaScript.** The reference implementation in `docs/direction/` mutates thousands of positions in a JS loop every frame. Adding per-point cursor response on top of that does not hold 60fps. Breathing, scatter and cursor push are computed per-point on the GPU from `uScatter`, `uTime` and `uPointer`. Measured on Intel UHD 620: 60fps steady at 26,000 points in a single stage, and hovering adds no measurable cost. **Do not move per-point work back into JS.** 18,000 points per stage now that two can exist; each stage's `frameloop` drops to `'demand'` while off-screen, so an unpinned stage isn't still paying full render cost.
 

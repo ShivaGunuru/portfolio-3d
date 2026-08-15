@@ -2,7 +2,21 @@ import { useEffect, useRef, useState, type RefObject } from 'react'
 import { Canvas } from '@react-three/fiber'
 
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
+import { usePortraitPoints } from '../hooks/usePortraitPoints'
 import { HeadPoints, type HeadMode } from './HeadPoints'
+
+/**
+ * Candidate paths for the portrait photograph the point cloud is sampled from,
+ * tried in order. Both extensions are accepted so the file can be dropped in
+ * as either without editing code.
+ *
+ * If none load, the stage falls back to the parametric head, so the site is
+ * never broken by a missing asset.
+ */
+export const PORTRAIT_SOURCES = [
+  '/images/portrait.jpg',
+  '/images/portrait.png',
+] as const
 
 /**
  * Reads a design token off the document. Tailwind's `@theme` emits every token
@@ -49,6 +63,16 @@ export function HeadStage({ progress, mode, className }: HeadStageProps) {
     glow: readToken('--color-head-glow', '#FFE3B0'),
   }))
 
+  // Sampled once per stage. Both stages request the same URL, so the browser
+  // cache serves the second one without a second network round trip.
+  const { data: portrait, status: portraitStatus } = usePortraitPoints(
+    isCompact ? undefined : PORTRAIT_SOURCES,
+    {
+      baseColor: tokens.base,
+      accentColor: tokens.accent,
+    },
+  )
+
   useEffect(() => {
     const mql = window.matchMedia('(max-width: 768px)')
     const sync = () => setIsCompact(mql.matches)
@@ -72,7 +96,16 @@ export function HeadStage({ progress, mode, className }: HeadStageProps) {
   if (isCompact) return null
 
   return (
-    <div ref={container} aria-hidden="true" className={className}>
+    <div
+      ref={container}
+      aria-hidden="true"
+      className={className}
+      // Surfaces which source the cloud came from. 'ready' means the photo was
+      // sampled; 'unavailable' means it fell back to the parametric head. Makes
+      // a missing or unreadable portrait visible instead of silent.
+      data-portrait={portraitStatus}
+      data-points={portrait ? portrait.count : undefined}
+    >
       <Canvas
         // R3F writes `pointer-events: auto` inline on its own container, which
         // would let the canvas swallow clicks on whatever sits near it.
@@ -92,6 +125,7 @@ export function HeadStage({ progress, mode, className }: HeadStageProps) {
           mode={mode}
           still={reducedMotion}
           containerRef={container}
+          portrait={portrait}
         />
       </Canvas>
     </div>
