@@ -2,7 +2,7 @@ import { Fragment, useRef } from 'react'
 
 import { about } from '../../content/site'
 import { usePinnedStage } from '../../hooks/usePinnedStage'
-import { HeadStage } from '../../three/HeadStage'
+import { Stage } from '../../three/Stage'
 import { Reveal } from '../Reveal'
 import { SectionHeading } from '../SectionHeading'
 
@@ -65,10 +65,10 @@ export function About() {
           ))}
         </Reveal>
 
-        <HeadStage
+        <Stage
           progress={progress}
           mode="turn"
-          className="hidden aspect-square w-full max-w-xl justify-self-center md:block"
+          className="aspect-square w-full max-w-xl justify-self-center"
         />
       </div>
     </section>

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import { Canvas } from '@react-three/fiber'
 
-import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 import { usePortraitPoints } from '../hooks/usePortraitPoints'
 import { HeadPoints, type HeadMode } from './HeadPoints'
 
@@ -35,23 +34,25 @@ interface HeadStageProps {
   progress: RefObject<number>
   mode: HeadMode
   className?: string
+  /** Resolved by `Stage`, which already needs it to decide whether to load. */
+  reducedMotion: boolean
 }
 
 /**
- * A single section's 3D stage — scoped to its own layout column, never a
- * page-wide background layer.
+ * A single section's 3D scene, scoped to its own layout column rather than
+ * being a page-wide background layer.
  *
- * Hidden entirely under 768px. Per the "mobile is a deliberate lighter
- * experience" non-negotiable, this isn't a shrunk version of the desktop
- * scene: pinning combined with a mobile browser's address-bar show/hide
- * resize behaviour is a well-known source of jank, so mobile gets no 3D here
- * at all rather than a smaller, glitchier version of it.
+ * This module is loaded lazily by `Stage`, which owns the breakpoint check and
+ * reserves the layout box beforehand. Importing three.js is therefore already
+ * a decision by the time this renders: it is only reached on viewports that
+ * will actually show a scene.
  */
-export function HeadStage({ progress, mode, className }: HeadStageProps) {
-  const reducedMotion = usePrefersReducedMotion()
-  const [isCompact, setIsCompact] = useState(() =>
-    window.matchMedia('(max-width: 768px)').matches,
-  )
+export function HeadStage({
+  progress,
+  mode,
+  className,
+  reducedMotion,
+}: HeadStageProps) {
   const [isNearView, setIsNearView] = useState(false)
   const container = useRef<HTMLDivElement>(null)
 
@@ -63,22 +64,12 @@ export function HeadStage({ progress, mode, className }: HeadStageProps) {
     glow: readToken('--color-head-glow', '#FFE3B0'),
   }))
 
-  // Sampled once per stage. Both stages request the same URL, so the browser
-  // cache serves the second one without a second network round trip.
+  // Both stages request the same URL, so the browser cache serves the second
+  // without a second network round trip.
   const { data: portrait, status: portraitStatus } = usePortraitPoints(
-    isCompact ? undefined : PORTRAIT_SOURCES,
-    {
-      baseColor: tokens.base,
-      accentColor: tokens.accent,
-    },
+    PORTRAIT_SOURCES,
+    { baseColor: tokens.base, accentColor: tokens.accent },
   )
-
-  useEffect(() => {
-    const mql = window.matchMedia('(max-width: 768px)')
-    const sync = () => setIsCompact(mql.matches)
-    mql.addEventListener('change', sync)
-    return () => mql.removeEventListener('change', sync)
-  }, [])
 
   useEffect(() => {
     const el = container.current
@@ -93,12 +84,9 @@ export function HeadStage({ progress, mode, className }: HeadStageProps) {
     return () => io.disconnect()
   }, [])
 
-  if (isCompact) return null
-
   return (
     <div
       ref={container}
-      aria-hidden="true"
       className={className}
       // Surfaces which source the cloud came from. 'ready' means the photo was
       // sampled; 'unavailable' means it fell back to the parametric head. Makes

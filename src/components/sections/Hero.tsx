@@ -2,7 +2,7 @@ import { useRef } from 'react'
 
 import { hero, site } from '../../content/site'
 import { usePinnedStage } from '../../hooks/usePinnedStage'
-import { HeadStage } from '../../three/HeadStage'
+import { Stage } from '../../three/Stage'
 import { Reveal } from '../Reveal'
 
 export function Hero() {
@@ -53,10 +53,10 @@ export function Hero() {
           </div>
         </Reveal>
 
-        <HeadStage
+        <Stage
           progress={progress}
           mode="assemble"
-          className="hidden aspect-square w-full max-w-xl justify-self-center md:block"
+          className="aspect-square w-full max-w-xl justify-self-center"
         />
       </div>
     </section>

@@ -1,12 +1,15 @@
 {
   "compilerOptions": {
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo",
     "target": "ES2022",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    // Tests read files from disk and also import app modules that touch the
+    // DOM, so both libraries are needed here even though the app config has
+    // only one and the vite config has the other.
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
-    "types": ["vite/client"],
+    "types": ["node", "vitest/globals"],
 
     "strict": true,
     "noUnusedLocals": true,
@@ -22,8 +25,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  // Tests are typechecked by tsconfig.test.json instead, which carries the
-  // Node types they need and which the app deliberately does not have.
-  "include": ["src"],
-  "exclude": ["src/**/__tests__/**", "src/**/*.test.ts"]
+  "include": ["src/**/__tests__/**/*.ts", "src/**/*.test.ts"]
 }

@@ -23,9 +23,16 @@
   /* Text */
   --color-fg: #e6e3dc; /* primary, warm off-white */
   --color-body: #c9c5e4; /* case-study paragraph copy */
-  --color-muted: #9a95c8; /* nav links, subline, secondary labels */
-  --color-dim: #6e6aa8; /* eyebrow labels, tertiary meta */
-  --color-faint: #413c6e; /* lowest emphasis, footer sign-off */
+  /* Text tokens are ordered by WCAG contrast against --color-bg, and every one
+     clears AA 4.5:1 for normal text. `dim` and `faint` were originally #6e6aa8
+     (4.02:1) and #413c6e (1.96:1), both failing, the sign-off effectively
+     invisible. They are lifted to the values below; `faint` is deliberately
+     desaturated rather than merely darkened so it still reads as the quietest
+     tier without dropping below the threshold.
+     Ladder: faint 4.56 < dim 5.21 < muted 7.03 < accent 9.12 < body 11.79 < fg 15.35 */
+  --color-muted: #9a95c8; /* nav links, subline, secondary labels. 7.03:1 */
+  --color-dim: #807dba; /* eyebrow labels, tertiary meta. 5.21:1 */
+  --color-faint: #797699; /* lowest emphasis, footer sign-off. 4.56:1 */
 
   /* Accent + structure */
   --color-accent: #e8a33d; /* links on hover, section labels, selection */

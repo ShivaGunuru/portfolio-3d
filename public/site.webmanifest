@@ -1,0 +1,22 @@
+{
+  "name": "Shiva Gunuru | AI Engineer",
+  "short_name": "Shiva Gunuru",
+  "description": "AI engineer with a backend foundation, building RAG and applied LLM systems, plus real project case studies and a content-creation background.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B0A14",
+  "theme_color": "#0B0A14",
+  "icons": [
+    {
+      "src": "/icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

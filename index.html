@@ -10,15 +10,78 @@
       content="AI engineer with a backend foundation, building RAG and applied LLM systems, plus real project case studies and a content-creation background."
     />
     <meta name="author" content="Shiva Gunuru" />
-    <meta name="theme-color" content="#0B0A14" />
+    <link rel="canonical" href="https://portfolio-3d-jade-chi.vercel.app/" />
 
-    <meta property="og:type" content="website" />
+    <!-- Icons. The SVG is the primary; the PNG covers Safari and older
+         browsers, which do not accept an SVG favicon. -->
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icon-180.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#0B0A14" />
+    <meta name="color-scheme" content="dark" />
+
+    <!-- Open Graph. Without an explicit image a shared link renders as a bare
+         text row, which matters for a portfolio circulated on LinkedIn. -->
+    <meta property="og:type" content="profile" />
+    <meta property="og:site_name" content="Shiva Gunuru" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:url" content="https://portfolio-3d-jade-chi.vercel.app/" />
     <meta property="og:title" content="Shiva Gunuru | AI Engineer" />
     <meta
       property="og:description"
       content="AI engineer with a backend foundation, building RAG and applied LLM systems, plus real project case studies and a content-creation background."
     />
+    <meta
+      property="og:image"
+      content="https://portfolio-3d-jade-chi.vercel.app/og.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="A head rendered as a cloud of glowing points, the visual motif of the site."
+    />
+    <meta property="profile:first_name" content="Shiva" />
+    <meta property="profile:last_name" content="Gunuru" />
+
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Shiva Gunuru | AI Engineer" />
+    <meta
+      name="twitter:description"
+      content="AI engineer with a backend foundation, building RAG and applied LLM systems, plus real project case studies and a content-creation background."
+    />
+    <meta
+      name="twitter:image"
+      content="https://portfolio-3d-jade-chi.vercel.app/og.png"
+    />
+
+    <!-- Structured data. Lets search engines associate the name, the role and
+         the profiles with one another rather than inferring it from prose. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": "Shiva Gunuru",
+        "jobTitle": "AI Engineer",
+        "email": "mailto:shiva.gunuru@gmail.com",
+        "url": "https://portfolio-3d-jade-chi.vercel.app/",
+        "image": "https://portfolio-3d-jade-chi.vercel.app/og.png",
+        "description": "AI engineer with a backend foundation, building RAG and applied LLM systems, plus real project case studies and a content-creation background.",
+        "knowsAbout": [
+          "Retrieval-Augmented Generation",
+          "Applied LLM systems",
+          "Backend engineering",
+          "Python",
+          "Java",
+          "Spring Boot"
+        ],
+        "sameAs": [
+          "https://github.com/ShivaGunuru",
+          "https://www.linkedin.com/in/shiva-gunuru-8b015415a/",
+          "https://instagram.com/mr.owerthinker"
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
