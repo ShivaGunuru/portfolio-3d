@@ -76,14 +76,19 @@ export const headVertexShader = /* glsl */ `
 
     // Tone drives both size and opacity, which is what lets a sampled
     // photograph read as a face. With every point the same size and weight the
-    // cloud is an evenly lit blob no matter how accurate its outline is. The
-    // floor keeps shadow detail present rather than punching holes in the form.
-    vTone = 0.20 + 0.80 * aLuma;
+    // cloud is an evenly lit blob no matter how accurate its outline is.
+    //
+    // The floor is high and the curve is gentler than linear: shadows still
+    // need to carry the form rather than drop out, and a photograph's midtones
+    // are where most of a face lives, so pushing them up is what actually
+    // brightens it. Contrast comes from the range above the floor, not from
+    // letting the darks fall to nothing.
+    vTone = 0.38 + 0.62 * pow(aLuma, 0.80);
 
     gl_Position = projectionMatrix * viewPos;
 
     // Matches three's own point size attenuation, with a swell near the cursor.
-    float size = uSize * (0.55 + 0.75 * aLuma) * (1.0 + influence * 2.4);
+    float size = uSize * (0.78 + 0.55 * aLuma) * (1.0 + influence * 2.4);
     gl_PointSize = size * (uScale / max(-viewPos.z, 0.0001));
   }
 `

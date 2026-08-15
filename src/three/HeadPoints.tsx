@@ -114,12 +114,28 @@ export function HeadPoints({
     // intentionally built once per colour set only.
   }, [glowColor])
 
-  // The portrait samples on a denser, flatter grid than the parametric head,
-  // so its points want to be smaller to avoid reading as a solid sheet.
+  /**
+   * Point size, and it has to be set against the 1px floor rather than by eye.
+   *
+   * `gl_PointSize` is clamped to ALIASED_POINT_SIZE_RANGE, whose minimum is 1
+   * on every implementation worth targeting. At the stage's real scale
+   * (uScale = canvasHeight * dpr / 2, around 491 for a 561px box) a uSize of
+   * 0.0135 works out to 0.91px at the head's depth: under the floor, so every
+   * point clamped to 1px, the tone-driven size modulation did nothing at all,
+   * and the face rendered dim and sparse no matter how many points it had.
+   *
+   * Measured against that scale: 0.035 gives ~2.3px, 0.045 ~3.0px, 0.055
+   * ~3.7px, with mean face brightness 39, 64 and 94 respectively and clipping
+   * still at 0.11% of pixels. 0.055 is the bright end of what stays clean.
+   *
+   * This is resolution independent: gl_PointSize scales with uScale, so the
+   * apparent size holds across canvas sizes and pixel ratios.
+   */
   useEffect(() => {
     const mat = material.current
     if (!mat) return
-    mat.uniforms.uSize.value = isPortrait ? 0.011 : 0.016
+    mat.uniforms.uSize.value = isPortrait ? 0.055 : 0.024
+    mat.uniforms.uOpacity.value = isPortrait ? 1.0 : 0.85
     // Under reduced motion or off-screen the frame loop is on demand, so a
     // newly loaded cloud would otherwise never be drawn.
     invalidate()

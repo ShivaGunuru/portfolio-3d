@@ -97,10 +97,11 @@ function luminance(r: number, g: number, b: number): number {
 export function samplePortraitPoints(
   image: HTMLImageElement,
   {
-    // A face needs more points than an abstract form to stay legible: features
-    // are carried by fine tonal detail rather than by silhouette alone.
-    maxPoints = 34000,
-    sampleWidth = 430,
+    // A face needs far more points than an abstract form to stay legible:
+    // features are carried by fine tonal detail rather than by silhouette
+    // alone, and additive blending means density is also what makes it bright.
+    maxPoints = 52000,
+    sampleWidth = 560,
     height = 5.1,
     depth = 1.15,
     colorMode = 'palette',
