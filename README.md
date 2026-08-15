@@ -37,7 +37,7 @@ per-point cursor response on top. Moving the work to the GPU holds 60fps on
 integrated graphics, with hovering adding no measurable cost.
 
 The cloud is sampled from a portrait photograph when one is present at
-`public/images/portrait.{jpg,png}`, and falls back to a parametric head volume
+`src/assets/portrait.*`, and falls back to a parametric head volume
 when it is not. Background separation models the studio backdrop per row rather
 than as a single averaged colour, because a single average misreads the darker
 corner of a gradient backdrop as subject.

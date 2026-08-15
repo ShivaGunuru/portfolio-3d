@@ -5,17 +5,25 @@ import { usePortraitPoints } from '../hooks/usePortraitPoints'
 import { HeadPoints, type HeadMode } from './HeadPoints'
 
 /**
- * Candidate paths for the portrait photograph the point cloud is sampled from,
- * tried in order. Both extensions are accepted so the file can be dropped in
- * as either without editing code.
+ * The portrait photograph the point cloud is sampled from, resolved at build
+ * time from `src/assets/portrait.*`.
  *
- * If none load, the stage falls back to the parametric head, so the site is
- * never broken by a missing asset.
+ * Resolving it with `import.meta.glob` rather than requesting a fixed public
+ * path matters for two reasons. The file is optional, and probing a fixed URL
+ * for a file that is not there logs a 404 in every visitor's console; this
+ * emits no request at all when there is no portrait. It also means the image
+ * is hashed and served with immutable cache headers like any other asset,
+ * instead of being an unversioned public file.
+ *
+ * Any of the four extensions works. If none is present, `PORTRAIT_URL` is
+ * undefined and the stage falls back to the parametric head.
  */
-export const PORTRAIT_SOURCES = [
-  '/images/portrait.jpg',
-  '/images/portrait.png',
-] as const
+const portraitModules = import.meta.glob<string>(
+  '../assets/portrait.{jpg,jpeg,png,webp}',
+  { eager: true, query: '?url', import: 'default' },
+)
+
+export const PORTRAIT_URL: string | undefined = Object.values(portraitModules)[0]
 
 /**
  * Reads a design token off the document. Tailwind's `@theme` emits every token
@@ -67,7 +75,7 @@ export function HeadStage({
   // Both stages request the same URL, so the browser cache serves the second
   // without a second network round trip.
   const { data: portrait, status: portraitStatus } = usePortraitPoints(
-    PORTRAIT_SOURCES,
+    PORTRAIT_URL,
     { baseColor: tokens.base, accentColor: tokens.accent },
   )
 

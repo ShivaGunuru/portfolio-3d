@@ -73,7 +73,9 @@ Fonts are **self-hosted via `@fontsource`**, never loaded from the Google Fonts 
 
 ### The point cloud is a photograph
 
-Both stages sample **`public/images/portrait.{jpg,png}`** into points, so the head is the subject's actual likeness rather than a generic form. See [`public/images/README.md`](public/images/README.md) for how to swap the photo and every tuning constant.
+Both stages sample **`src/assets/portrait.*`** into points, so the head is the subject's actual likeness rather than a generic form. See [`src/assets/README.md`](src/assets/README.md) for how to swap the photo and every tuning constant.
+
+The path is resolved with `import.meta.glob` at build time, not fetched from a fixed public URL. The photo is optional, and probing a fixed path for a file that is not there logs a 404 in every visitor's console; this way an absent portrait produces no request at all. It also gets content hashing and immutable cache headers, which a `public/` file would not.
 
 **The parametric head is now a fallback, not the primary.** If the photo is missing or undecodable, `usePortraitPoints` reports `unavailable` and `HeadPoints` renders `sampleHeadPoints` instead. The 3D layer is decorative, so a missing asset must never be able to break the page. Don't delete `headSurface.ts`.
 

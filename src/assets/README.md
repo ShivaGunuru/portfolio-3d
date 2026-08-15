@@ -5,16 +5,19 @@ placed here.
 
 ## Adding the photo
 
-Save it as **either** of these (both are tried, in this order):
+Save it in this directory as any one of:
 
 ```
-public/images/portrait.jpg
-public/images/portrait.png
+src/assets/portrait.jpg
+src/assets/portrait.jpeg
+src/assets/portrait.png
+src/assets/portrait.webp
 ```
 
-Nothing else needs to change. If neither file is present, or the file cannot be
-decoded, both stages fall back to the parametric head automatically, so the
-site is never broken by a missing asset.
+Nothing else needs to change. The file is discovered at build time, so when
+none is present the site makes no request for it at all and both stages fall
+back to the parametric head. A file that is present but cannot be decoded falls
+back the same way. The site is never broken by a missing or bad portrait.
 
 To confirm it is being used, load the site and check either stage in devtools:
 
@@ -39,7 +42,7 @@ The sampler is tuned for a **head-and-shoulders portrait on a plain backdrop**:
 
 ## Tuning
 
-All constants live in [`src/three/portraitSampler.ts`](../../src/three/portraitSampler.ts).
+All constants live in [`src/three/portraitSampler.ts`](../three/portraitSampler.ts).
 
 | Option | Default | What it does |
 |---|---|---|
@@ -64,6 +67,6 @@ surface detail only.
 That has one consequence worth knowing: **the result is a bas-relief, not a
 closed volume.** It has a front and nothing behind it. This is why the portrait
 rotates much less than the parametric head did (`PORTRAIT_TURN_ANGLE` in
-[`src/three/HeadPoints.tsx`](../../src/three/HeadPoints.tsx)) — turned far
-enough, the flat side would face the camera and give it away. Don't raise that
-angle much without checking how it reads.
+[`src/three/HeadPoints.tsx`](../three/HeadPoints.tsx)). Turned far enough, the
+flat side would face the camera and give it away. Don't raise that angle much
+without checking how it reads.
