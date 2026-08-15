@@ -17,6 +17,17 @@ export type PortraitStatus = 'loading' | 'ready' | 'unavailable'
  * added yet, which matters because the 3D layer is decorative and must never
  * be able to take the page down with it.
  */
+/**
+ * Sampling is memoised across stages.
+ *
+ * Hero and About both request the same portrait. The browser caches the image
+ * itself, but sampling it is over a hundred milliseconds of synchronous work
+ * on the main thread, and without this both stages pay it independently. The
+ * cache is keyed on the options too, so a stage asking for different settings
+ * still gets its own result.
+ */
+const sampleCache = new Map<string, Promise<PortraitPointData | null>>()
+
 /** Loads one URL, resolving to null rather than rejecting if it fails. */
 function loadImage(url: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
@@ -63,31 +74,40 @@ export function usePortraitPoints(
     let cancelled = false
     setStatus('loading')
 
-    void (async () => {
-      for (const url of list) {
-        const image = await loadImage(url)
-        if (cancelled) return
-        if (!image) continue
+    const cacheKey = `${sourcesKey}::${optionsKey}`
+    let pending = sampleCache.get(cacheKey)
 
-        try {
-          const sampled = samplePortraitPoints(image, JSON.parse(optionsKey))
-          if (cancelled) return
-          // Sampling down to almost nothing means background rejection ate the
-          // subject. Treat that as unusable rather than rendering a near-empty
-          // cloud that looks broken.
-          if (sampled.count < 500) continue
-          setData(sampled)
-          setStatus('ready')
-          return
-        } catch {
-          // Try the next candidate.
+    if (!pending) {
+      pending = (async () => {
+        for (const url of list) {
+          const image = await loadImage(url)
+          if (!image) continue
+          try {
+            const sampled = samplePortraitPoints(image, JSON.parse(optionsKey))
+            // Sampling down to almost nothing means background separation ate
+            // the subject. Treat that as unusable rather than rendering a
+            // near-empty cloud that looks broken.
+            if (sampled.count < 500) continue
+            return sampled
+          } catch {
+            // Try the next candidate.
+          }
         }
-      }
-      if (!cancelled) {
+        return null
+      })()
+      sampleCache.set(cacheKey, pending)
+    }
+
+    void pending.then((sampled) => {
+      if (cancelled) return
+      if (sampled) {
+        setData(sampled)
+        setStatus('ready')
+      } else {
         setData(null)
         setStatus('unavailable')
       }
-    })()
+    })
 
     return () => {
       cancelled = true

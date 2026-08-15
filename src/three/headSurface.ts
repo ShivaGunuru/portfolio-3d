@@ -45,6 +45,13 @@ export interface HeadPointData {
   colors: Float32Array
   /** Per-point noise seeds: x and z in -1..1, y in 0..1. */
   randoms: Float32Array
+  /**
+   * Per-point tone, matching the portrait sampler's attribute so both share
+   * one shader. The parametric head has no photographic tone of its own, so
+   * this carries a gentle depth cue instead: points nearer the viewer read
+   * slightly brighter, which gives the volume some form.
+   */
+  lumas: Float32Array
   count: number
 }
 
@@ -65,6 +72,7 @@ export function sampleHeadPoints(
   const positions = new Float32Array(count * 3)
   const colors = new Float32Array(count * 3)
   const randoms = new Float32Array(count * 3)
+  const lumas = new Float32Array(count)
 
   // Color converts hex (sRGB) into three's linear working space, which is what
   // the shader needs to do arithmetic in.
@@ -89,10 +97,14 @@ export function sampleHeadPoints(
     colors[i3 + 1] = c.g
     colors[i3 + 2] = c.b
 
+    // z runs roughly -1..1.24 on this surface; map it into 0..1 so points
+    // facing the camera are brighter than those on the far side.
+    lumas[i] = Math.min(1, Math.max(0, (z * shrink + 1.1) / 2.3))
+
     randoms[i3] = Math.random() * 2 - 1
     randoms[i3 + 1] = Math.random()
     randoms[i3 + 2] = Math.random() * 2 - 1
   }
 
-  return { positions, colors, randoms, count }
+  return { positions, colors, randoms, lumas, count }
 }

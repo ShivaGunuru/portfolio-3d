@@ -7,6 +7,17 @@ export interface PortraitPointData {
   colors: Float32Array
   /** Per-point noise seeds: x and z in -1..1, y in 0..1. */
   randoms: Float32Array
+  /**
+   * Per-point tone, 0..1, normalised across the subject only.
+   *
+   * This is what makes the cloud read as a face rather than an evenly lit
+   * blob. Absolute luminance is useless here: a subject can be darker than
+   * its own backdrop overall, so the range that matters is the one inside the
+   * subject, from hair and jacket at the bottom to skin and shirt at the top.
+   * The shader drives point size and opacity from it, so tonal structure
+   * survives into the render instead of every point being equally present.
+   */
+  lumas: Float32Array
   count: number
 }
 
@@ -34,7 +45,11 @@ export interface PortraitOptions {
    * jacket that would otherwise dominate the frame.
    */
   keepTop?: number
-  /** How aggressively the flat backdrop is discarded. Higher keeps more. */
+  /**
+   * Per-step colour tolerance for the background flood fill, 0..1. Raise it if
+   * backdrop survives around the subject; lower it if the fill leaks into the
+   * subject through a soft edge.
+   */
   backgroundTolerance?: number
 }
 
@@ -82,15 +97,20 @@ function luminance(r: number, g: number, b: number): number {
 export function samplePortraitPoints(
   image: HTMLImageElement,
   {
-    maxPoints = 20000,
-    sampleWidth = 220,
-    height = 4.6,
+    // A face needs more points than an abstract form to stay legible: features
+    // are carried by fine tonal detail rather than by silhouette alone.
+    maxPoints = 34000,
+    sampleWidth = 430,
+    height = 5.1,
     depth = 1.15,
     colorMode = 'palette',
     baseColor = '#B9B4E8',
     accentColor = '#E8A33D',
-    keepTop = 0.86,
-    backgroundTolerance = 0.16,
+    // Cropped to head and upper shoulders. A full head-and-chest crop spends
+    // close to half its points on jacket, which carries almost no recognition
+    // while diluting the density available for the face.
+    keepTop = 0.7,
+    backgroundTolerance = 0.055,
   }: PortraitOptions = {},
 ): PortraitPointData {
   const aspect = image.naturalWidth / image.naturalHeight
@@ -110,23 +130,22 @@ export function samplePortraitPoints(
 
   const at = (x: number, y: number) => (y * w + x) * 4
 
-  // --- background model ------------------------------------------------------
+  // --- background separation -------------------------------------------------
   // A studio backdrop is almost never one flat value: it carries a lighting
-  // falloff and often a vignette. Comparing every pixel against a single
-  // averaged colour therefore misreads the darkest corner of the backdrop as
-  // subject, which shows up as a lopsided point cloud.
+  // falloff and usually a vignette. Comparing each pixel against a reference
+  // colour, however carefully that reference is modelled, keeps failing at the
+  // extremes of the gradient, because the darkest corner of the backdrop can
+  // sit further from the reference than the subject does.
   //
-  // Instead the backdrop is modelled per row, interpolated between a left and
-  // a right reference, which tracks both vertical and horizontal gradients.
-  const edge = Math.max(2, Math.round(w * 0.02))
-
-  // A global reference from the top band, where a head-and-shoulders crop is
-  // reliably backdrop across the full width. Used to sanity-check each row.
+  // A flood fill inward from the border sidesteps that entirely. It never
+  // compares a pixel to a global value, only to its immediate neighbour, so it
+  // walks a smooth gradient of any depth and stops where the image changes
+  // abruptly, which is exactly where the subject begins.
+  const topBand = Math.max(1, Math.round(h * 0.05))
   let gR = 0
   let gG = 0
   let gB = 0
   let gN = 0
-  const topBand = Math.max(1, Math.round(h * 0.05))
   for (let y = 0; y < topBand; y++) {
     for (let x = 0; x < w; x++) {
       const i = at(x, y)
@@ -140,80 +159,107 @@ export function samplePortraitPoints(
   gG /= gN
   gB /= gN
 
-  // How far a row's own edge may drift from the global reference before it is
-  // assumed to be subject (shoulders reaching the frame edge) rather than
-  // backdrop.
-  const edgeGuard = 0.28
+  const isBackground = new Uint8Array(w * h)
+  const stack: number[] = []
 
-  const avgStrip = (y: number, from: number, to: number) => {
-    let r = 0
-    let g = 0
-    let b = 0
-    let n = 0
-    for (let x = from; x < to; x++) {
-      const i = at(x, y)
-      r += px[i]
-      g += px[i + 1]
-      b += px[i + 2]
-      n++
-    }
-    return n > 0 ? [r / n, g / n, b / n] : [gR, gG, gB]
+  /**
+   * How far a pixel may sit from the backdrop reference and still be treated
+   * as backdrop at all.
+   *
+   * This bound is what keeps the flood fill honest. Local continuity alone is
+   * not enough: subject interiors are smooth, so once the fill crosses a soft
+   * edge anywhere it walks straight through the face and hollows the subject
+   * out, leaving only an outline. Requiring every filled pixel to also remain
+   * plausibly backdrop-coloured means a soft edge can leak at most a pixel or
+   * two before the fill runs into tones no backdrop has.
+   */
+  const backdropBound = 0.30
+
+  const plausiblyBackdrop = (x: number, y: number) => {
+    const i = at(x, y)
+    const dr = (px[i] - gR) / 255
+    const dg = (px[i + 1] - gG) / 255
+    const db = (px[i + 2] - gB) / 255
+    return Math.sqrt(dr * dr + dg * dg + db * db) < backdropBound
   }
 
-  const isBackdropLike = (c: number[]) => {
-    const dr = (c[0] - gR) / 255
-    const dg = (c[1] - gG) / 255
-    const db = (c[2] - gB) / 255
-    return Math.sqrt(dr * dr + dg * dg + db * db) < edgeGuard
+  const push = (x: number, y: number) => {
+    const idx = y * w + x
+    if (isBackground[idx]) return
+    if (!plausiblyBackdrop(x, y)) return
+    isBackground[idx] = 1
+    stack.push(idx)
+  }
+
+  // Seeded from the top and sides only. The subject's shoulders run off the
+  // bottom of a head-and-shoulders crop, so seeding there would let the fill
+  // climb straight up into the jacket.
+  for (let x = 0; x < w; x++) push(x, 0)
+  for (let y = 0; y < h; y++) {
+    push(0, y)
+    push(w - 1, y)
+  }
+
+  // Per-step tolerance. Small, because a backdrop gradient changes only
+  // slightly between adjacent pixels while a subject edge changes sharply.
+  const step = backgroundTolerance
+
+  while (stack.length > 0) {
+    const idx = stack.pop() as number
+    const y = (idx / w) | 0
+    const x = idx - y * w
+    const i0 = idx * 4
+
+    const visit = (nx: number, ny: number) => {
+      if (nx < 0 || ny < 0 || nx >= w || ny >= h) return
+      const nIdx = ny * w + nx
+      if (isBackground[nIdx]) return
+      if (!plausiblyBackdrop(nx, ny)) return
+      const i1 = nIdx * 4
+      const dr = (px[i0] - px[i1]) / 255
+      const dg = (px[i0 + 1] - px[i1 + 1]) / 255
+      const db = (px[i0 + 2] - px[i1 + 2]) / 255
+      if (Math.sqrt(dr * dr + dg * dg + db * db) > step) return
+      isBackground[nIdx] = 1
+      stack.push(nIdx)
+    }
+
+    visit(x - 1, y)
+    visit(x + 1, y)
+    visit(x, y - 1)
+    visit(x, y + 1)
   }
 
   const rowLimit = Math.min(h, Math.round(h * keepTop))
 
-  // Per-row left/right backdrop references, falling back to the global value
-  // whenever the subject reaches that edge.
-  const leftRef = new Float32Array(rowLimit * 3)
-  const rightRef = new Float32Array(rowLimit * 3)
-  for (let y = 0; y < rowLimit; y++) {
-    const l = avgStrip(y, 0, edge)
-    const r = avgStrip(y, w - edge, w)
-    const lc = isBackdropLike(l) ? l : [gR, gG, gB]
-    const rc = isBackdropLike(r) ? r : [gR, gG, gB]
-    leftRef[y * 3] = lc[0]
-    leftRef[y * 3 + 1] = lc[1]
-    leftRef[y * 3 + 2] = lc[2]
-    rightRef[y * 3] = rc[0]
-    rightRef[y * 3 + 1] = rc[1]
-    rightRef[y * 3 + 2] = rc[2]
-  }
-
   // Collect candidates first, then thin them down to maxPoints. Thinning by a
   // stride afterwards keeps the distribution even; rejecting during the walk
   // would bias toward whichever region was scanned first.
-  const candidates: Array<{ u: number; v: number; i: number }> = []
+  const candidates: Array<{ u: number; v: number; i: number; luma: number }> = []
 
   for (let y = 0; y < rowLimit; y++) {
     for (let x = 0; x < w; x++) {
       const i = at(x, y)
       const a = px[i + 3]
       if (a < 8) continue
+      if (isBackground[y * w + x]) continue
 
-      // Backdrop reference for this exact pixel, interpolated across the row.
-      const t = x / (w - 1)
-      const rr = leftRef[y * 3] + (rightRef[y * 3] - leftRef[y * 3]) * t
-      const rg =
-        leftRef[y * 3 + 1] + (rightRef[y * 3 + 1] - leftRef[y * 3 + 1]) * t
-      const rb =
-        leftRef[y * 3 + 2] + (rightRef[y * 3 + 2] - leftRef[y * 3 + 2]) * t
-
-      const dr = (px[i] - rr) / 255
-      const dg = (px[i + 1] - rg) / 255
-      const db = (px[i + 2] - rb) / 255
-      const distance = Math.sqrt(dr * dr + dg * dg + db * db)
-      if (distance < backgroundTolerance) continue
-
-      candidates.push({ u: x / (w - 1), v: y / (h - 1), i })
+      candidates.push({
+        u: x / (w - 1),
+        v: y / (h - 1),
+        i,
+        luma: luminance(px[i], px[i + 1], px[i + 2]),
+      })
     }
   }
+
+  // Tone range of the subject alone. Percentiles rather than min and max, so a
+  // single specular highlight or one crushed shadow cannot flatten everything
+  // else into the middle of the range.
+  const sortedLuma = candidates.map((c) => c.luma).sort((a, b) => a - b)
+  const at5 = sortedLuma[Math.floor(sortedLuma.length * 0.05)] ?? 0
+  const at95 = sortedLuma[Math.floor(sortedLuma.length * 0.95)] ?? 1
+  const lumaSpan = Math.max(0.05, at95 - at5)
 
   const stride = Math.max(1, Math.ceil(candidates.length / maxPoints))
   const count = Math.floor(candidates.length / stride)
@@ -221,6 +267,7 @@ export function samplePortraitPoints(
   const positions = new Float32Array(count * 3)
   const colors = new Float32Array(count * 3)
   const randoms = new Float32Array(count * 3)
+  const lumas = new Float32Array(count)
 
   // Colour converts hex (sRGB) into three's linear working space, matching how
   // the parametric sampler feeds the same shader.
@@ -241,7 +288,8 @@ export function samplePortraitPoints(
     const r = px[i]
     const g = px[i + 1]
     const b = px[i + 2]
-    const luma = luminance(r, g, b)
+    // Normalised across the subject's own range, not absolute.
+    const luma = Math.min(1, Math.max(0, (candidates[n * stride].luma - at5) / lumaSpan))
 
     // Jitter breaks up the source pixel grid, which would otherwise read as
     // visible scanlines once the points are drawn as discs.
@@ -268,10 +316,12 @@ export function samplePortraitPoints(
     colors[n3 + 1] = tmp.g
     colors[n3 + 2] = tmp.b
 
+    lumas[n] = luma
+
     randoms[n3] = Math.random() * 2 - 1
     randoms[n3 + 1] = Math.random()
     randoms[n3 + 2] = Math.random() * 2 - 1
   }
 
-  return { positions, colors, randoms, count }
+  return { positions, colors, randoms, lumas, count }
 }

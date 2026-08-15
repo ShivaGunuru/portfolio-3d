@@ -62,7 +62,7 @@ Fonts are **self-hosted via `@fontsource`**, never loaded from the Google Fonts 
 
 | File | Role |
 |---|---|
-| `src/three/portraitSampler.ts` | Photo → point cloud. Gradient-aware background rejection, depth envelope, palette recolour |
+| `src/three/portraitSampler.ts` | Photo → point cloud. Bounded flood-fill background separation, depth envelope, tone normalisation, palette recolour |
 | `src/three/headSurface.ts` | Parametric head volume + area-weighted point sampling. **Fallback only** |
 | `src/three/headShaders.ts` | GLSL. All per-point motion lives here |
 | `src/three/HeadPoints.tsx` | Uniform wiring, easing, group rotation; takes `progress` + `mode` + optional `portrait` as props, computes nothing about scroll itself |
@@ -84,6 +84,10 @@ The path is resolved with `import.meta.glob` at build time, not fetched from a f
 **The portrait is a bas-relief, not a closed volume.** It has a front and nothing behind it, so it rotates far less than the parametric head did: `PORTRAIT_TURN_ANGLE` and `PORTRAIT_IDLE_SWAY` in `HeadPoints.tsx` are deliberately small. Raising them swings the flat side toward the camera.
 
 **Colours are remapped into the palette by luminance**, not taken from the photo, so the locked visual direction survives a full-colour source. `colorMode: 'photo'` opts out.
+
+**Tone is normalised across the subject, and drives point size and opacity, not just hue.** This is what makes a sampled photo read as a face rather than an evenly lit blob. Absolute luminance is useless: this subject is *darker* than his own backdrop, so the range that matters is the one inside the subject. The `aLuma` attribute carries it, and the parametric fallback supplies the same attribute as a depth cue so both paths share one shader.
+
+**Background separation is a bounded flood fill inward from the border.** Two failed approaches are worth not repeating: comparing each pixel to a reference colour (however carefully modelled, per-row included) keeps misreading the dark end of a vignette as subject, and an unbounded flood fill leaks through soft edges and hollows the subject into an outline. The fill needs *both* local step continuity and a global bound on how far a filled pixel may sit from the backdrop reference.
 
 **Each stage exposes `data-portrait` and `data-points`** on its container, so whether the photo loaded is inspectable rather than guessed at.
 

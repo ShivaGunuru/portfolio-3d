@@ -46,12 +46,12 @@ All constants live in [`src/three/portraitSampler.ts`](../three/portraitSampler.
 
 | Option | Default | What it does |
 |---|---|---|
-| `maxPoints` | 20000 | Upper bound on points. Background rejection usually lands it lower. |
-| `sampleWidth` | 220 | Resolution the photo is sampled at. Higher is denser and slower. |
-| `height` | 4.6 | World height of the sampled region. Larger fills more of the frame. |
+| `maxPoints` | 34000 | Upper bound on points. Background rejection usually lands it lower. |
+| `sampleWidth` | 430 | Resolution the photo is sampled at. Higher is denser and slower. |
+| `height` | 5.1 | World height of the sampled region. Larger fills more of the frame. |
 | `depth` | 1.15 | How far the relief protrudes toward the camera. |
-| `keepTop` | 0.86 | Fraction of the image kept from the top. Lower trims more chest/jacket. |
-| `backgroundTolerance` | 0.16 | Higher keeps more of the backdrop. Raise if parts of the subject vanish. |
+| `keepTop` | 0.7 | Fraction of the image kept from the top. Lower trims more chest/jacket. |
+| `backgroundTolerance` | 0.055 | Per-step tolerance for the background flood fill. Raise if backdrop survives around the subject; lower if the fill leaks into it. |
 | `colorMode` | `'palette'` | `'palette'` recolours by luminance into the site palette. `'photo'` keeps original colours. |
 
 `depthEnvelope()` in the same file positions the head and shoulder domes. If

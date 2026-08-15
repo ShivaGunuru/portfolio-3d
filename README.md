@@ -38,9 +38,10 @@ integrated graphics, with hovering adding no measurable cost.
 
 The cloud is sampled from a portrait photograph when one is present at
 `src/assets/portrait.*`, and falls back to a parametric head volume
-when it is not. Background separation models the studio backdrop per row rather
-than as a single averaged colour, because a single average misreads the darker
-corner of a gradient backdrop as subject.
+when it is not. Background separation is a flood fill inward from the border, bounded so it can
+only claim backdrop-coloured pixels. Comparing against a reference colour, however
+carefully modelled, kept failing at the extremes of a vignette; an unbounded fill
+went the other way and hollowed the subject out through soft edges.
 
 ### Performance
 

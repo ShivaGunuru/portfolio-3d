@@ -190,6 +190,7 @@ export function HeadPoints({
           />
           <bufferAttribute attach="attributes-aColor" args={[data.colors, 3]} />
           <bufferAttribute attach="attributes-aRandom" args={[data.randoms, 3]} />
+          <bufferAttribute attach="attributes-aLuma" args={[data.lumas, 1]} />
         </bufferGeometry>
         <shaderMaterial
           ref={material}

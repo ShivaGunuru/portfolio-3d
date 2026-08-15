@@ -28,11 +28,13 @@ export const headVertexShader = /* glsl */ `
   uniform float uRadius;     // pointer influence radius, in NDC units
   uniform float uPush;       // how far affected points travel, in view units
 
-  attribute vec3 aRandom;
-  attribute vec3 aColor;
+  attribute vec3  aRandom;
+  attribute vec3  aColor;
+  attribute float aLuma;   // 0..1 tone, normalised across the subject
 
   varying vec3  vColor;
   varying float vGlow;
+  varying float vTone;
 
   void main() {
     // --- morph -------------------------------------------------------------
@@ -72,10 +74,16 @@ export const headVertexShader = /* glsl */ `
     vGlow  = influence;
     vColor = aColor;
 
+    // Tone drives both size and opacity, which is what lets a sampled
+    // photograph read as a face. With every point the same size and weight the
+    // cloud is an evenly lit blob no matter how accurate its outline is. The
+    // floor keeps shadow detail present rather than punching holes in the form.
+    vTone = 0.20 + 0.80 * aLuma;
+
     gl_Position = projectionMatrix * viewPos;
 
     // Matches three's own point size attenuation, with a swell near the cursor.
-    float size = uSize * (1.0 + influence * 2.4);
+    float size = uSize * (0.55 + 0.75 * aLuma) * (1.0 + influence * 2.4);
     gl_PointSize = size * (uScale / max(-viewPos.z, 0.0001));
   }
 `
@@ -95,6 +103,7 @@ export const headFragmentShader = /* glsl */ `
 
   varying vec3  vColor;
   varying float vGlow;
+  varying float vTone;
 
   void main() {
     vec2 offset = gl_PointCoord - vec2(0.5);
@@ -106,7 +115,7 @@ export const headFragmentShader = /* glsl */ `
     vec3 color = mix(vColor, uGlowColor, vGlow * 0.75);
     color *= 1.0 + vGlow * 2.0;
 
-    gl_FragColor = vec4(color, falloff * uOpacity);
+    gl_FragColor = vec4(color, falloff * uOpacity * vTone);
 
     #include <colorspace_fragment>
   }
