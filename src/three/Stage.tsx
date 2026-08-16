@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect, useState, type RefObject } from 'react'
 
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 import type { HeadMode } from './HeadPoints'
+import type { StageVariant } from './HeadStage'
 
 /**
  * Deferred so that three.js, which is by far the heaviest dependency, is not
@@ -17,6 +18,8 @@ interface StageProps {
   mode: HeadMode
   /** Applied to the reserved box, not to the canvas. */
   className?: string
+  /** Which scene to render. Defaults to the sampled portrait. */
+  variant?: StageVariant
 }
 
 /**
@@ -33,7 +36,12 @@ interface StageProps {
  *    three.js. That is the difference between a lighter mobile experience and
  *    a desktop scene that merely renders nothing after paying for itself.
  */
-export function Stage({ progress, mode, className }: StageProps) {
+export function Stage({
+  progress,
+  mode,
+  className,
+  variant = 'portrait',
+}: StageProps) {
   const reducedMotion = usePrefersReducedMotion()
   const [isCompact, setIsCompact] = useState(() =>
     window.matchMedia('(max-width: 768px)').matches,
@@ -83,6 +91,7 @@ export function Stage({ progress, mode, className }: StageProps) {
             mode={mode}
             className="h-full w-full"
             reducedMotion={reducedMotion}
+            variant={variant}
           />
         </Suspense>
       )}

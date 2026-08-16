@@ -2,7 +2,14 @@ import { useEffect, useRef, useState, type RefObject } from 'react'
 import { Canvas } from '@react-three/fiber'
 
 import { usePortraitPoints } from '../hooks/usePortraitPoints'
+import { HarmonicField } from './HarmonicField'
 import { HeadPoints, type HeadMode } from './HeadPoints'
+
+/**
+ * Which scene a stage renders. `portrait` samples the photograph; `harmonic`
+ * solves a spherical-harmonic field from an equation and has no source image.
+ */
+export type StageVariant = 'portrait' | 'harmonic'
 
 /**
  * The portrait photograph the point cloud is sampled from, resolved at build
@@ -44,6 +51,7 @@ interface HeadStageProps {
   className?: string
   /** Resolved by `Stage`, which already needs it to decide whether to load. */
   reducedMotion: boolean
+  variant?: StageVariant
 }
 
 /**
@@ -60,6 +68,7 @@ export function HeadStage({
   mode,
   className,
   reducedMotion,
+  variant = 'portrait',
 }: HeadStageProps) {
   const [isNearView, setIsNearView] = useState(false)
   const container = useRef<HTMLDivElement>(null)
@@ -72,10 +81,11 @@ export function HeadStage({
     glow: readToken('--color-head-glow', '#FFE3B0'),
   }))
 
-  // Both stages request the same URL, so the browser cache serves the second
-  // without a second network round trip.
+  // Only the portrait variant asks for the photograph. The harmonic field is
+  // solved from an equation, so requesting and sampling an image for it would
+  // be a hundred milliseconds of main-thread work for nothing.
   const { data: portrait, status: portraitStatus } = usePortraitPoints(
-    PORTRAIT_URL,
+    variant === 'portrait' ? PORTRAIT_URL : undefined,
     { baseColor: tokens.base, accentColor: tokens.accent },
   )
 
@@ -113,16 +123,27 @@ export function HeadStage({
         // paying for a live frame loop nobody can see or that shouldn't move.
         frameloop={reducedMotion || !isNearView ? 'demand' : 'always'}
       >
-        <HeadPoints
-          baseColor={tokens.base}
-          accentColor={tokens.accent}
-          glowColor={tokens.glow}
-          progress={progress}
-          mode={mode}
-          still={reducedMotion}
-          containerRef={container}
-          portrait={portrait}
-        />
+        {variant === 'harmonic' ? (
+          <HarmonicField
+            baseColor={tokens.base}
+            accentColor={tokens.accent}
+            glowColor={tokens.glow}
+            progress={progress}
+            still={reducedMotion}
+            containerRef={container}
+          />
+        ) : (
+          <HeadPoints
+            baseColor={tokens.base}
+            accentColor={tokens.accent}
+            glowColor={tokens.glow}
+            progress={progress}
+            mode={mode}
+            still={reducedMotion}
+            containerRef={container}
+            portrait={portrait}
+          />
+        )}
       </Canvas>
     </div>
   )

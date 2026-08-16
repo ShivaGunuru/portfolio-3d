@@ -51,6 +51,14 @@ export interface PortraitOptions {
    * subject through a soft edge.
    */
   backgroundTolerance?: number
+  /**
+   * Height over which the crop dissolves at the bottom, as a fraction of the
+   * image. Cropping alone leaves a ruler-straight edge where the points simply
+   * stop, which reads as a cut rather than as a form. Across this band both
+   * the chance of keeping a point and that point's tone fall away, so the
+   * cloud thins into the background instead of ending.
+   */
+  fadeBand?: number
 }
 
 /**
@@ -112,6 +120,7 @@ export function samplePortraitPoints(
     // while diluting the density available for the face.
     keepTop = 0.7,
     backgroundTolerance = 0.055,
+    fadeBand = 0.2,
   }: PortraitOptions = {},
 ): PortraitPointData {
   const aspect = image.naturalWidth / image.naturalHeight
@@ -236,20 +245,42 @@ export function samplePortraitPoints(
   // Collect candidates first, then thin them down to maxPoints. Thinning by a
   // stride afterwards keeps the distribution even; rejecting during the walk
   // would bias toward whichever region was scanned first.
-  const candidates: Array<{ u: number; v: number; i: number; luma: number }> = []
+  const candidates: Array<{
+    u: number
+    v: number
+    i: number
+    luma: number
+    fade: number
+  }> = []
+
+  const fadeRows = Math.max(1, Math.round(h * fadeBand))
+  const fadeStart = rowLimit - fadeRows
 
   for (let y = 0; y < rowLimit; y++) {
+    // Smoothstep rather than linear: a linear ramp still shows where it began.
+    let fade = 1
+    if (y > fadeStart) {
+      const t = Math.min(1, (y - fadeStart) / fadeRows)
+      fade = 1 - t * t * (3 - 2 * t)
+    }
+
     for (let x = 0; x < w; x++) {
       const i = at(x, y)
       const a = px[i + 3]
       if (a < 8) continue
       if (isBackground[y * w + x]) continue
 
+      // Dissolve toward the bottom of the crop. Thinning the population is
+      // what actually softens the edge: fading opacity alone would keep a
+      // straight line of faint points, which still reads as a line.
+      if (fade < 1 && Math.random() > fade) continue
+
       candidates.push({
         u: x / (w - 1),
         v: y / (h - 1),
         i,
         luma: luminance(px[i], px[i + 1], px[i + 2]),
+        fade,
       })
     }
   }
@@ -317,7 +348,9 @@ export function samplePortraitPoints(
     colors[n3 + 1] = tmp.g
     colors[n3 + 2] = tmp.b
 
-    lumas[n] = luma
+    // Thinning removes most of the edge; dimming what survives removes the
+    // rest, so the last points read as embers rather than as a cropped row.
+    lumas[n] = luma * candidates[n * stride].fade
 
     randoms[n3] = Math.random() * 2 - 1
     randoms[n3 + 1] = Math.random()

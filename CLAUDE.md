@@ -58,6 +58,14 @@ Fonts are **self-hosted via `@fontsource`**, never loaded from the Google Fonts 
 
 ## The 3D layer
 
+**The two stages render different scenes.** Hero samples the portrait photograph; About runs a generative spherical-harmonic field (`variant="harmonic"`) that has no source image at all, so About must not request or sample the photo. Files: `harmonicGeometry.ts` (seeds, parameter sets, fit scale), `harmonicShaders.ts`, `HarmonicField.tsx`.
+
+**The harmonic form is solved per frame, never stored.** Each point knows only its angle on a Fibonacci-lattice sphere; position comes from `r = sin(m0 phi)^m1 + cos(m2 phi)^m3 + sin(m4 theta)^m5 + cos(m6 theta)^m7`, and scroll interpolates the eight exponents between two sets. **Exponents near 1 make it a fuzzy ball** (the first attempt filled the entire frame as noise); high exponents are what carve distinct lobes. `harmonicFitScale()` samples across the morph rather than just the endpoints, because the midpoint can be wider than either end. Verified: zero frame-edge contact at morph 0, 0.5 and 1.
+
+**The portrait crop dissolves at the bottom** via `fadeBand`, which thins the population *and* dims what survives. Fading opacity alone leaves a straight line of faint points, which still reads as a line. Before it existed, the bottom row held the highest density in the whole cloud at full brightness, which is what made the crop look guillotined.
+
+`harmonicGeometry.ts` and `HarmonicField.tsx` differ only in casing from each other's original names; the data module was renamed for exactly that reason, since a case-insensitive filesystem collides on it.
+
 **There is no page-wide canvas.** Two independent "stages" live inside their own section's layout column: Hero (mode `assemble`) and About (mode `turn`). Work and Contact have no 3D. Each stage is pinned via GSAP ScrollTrigger while its section is in view — the viewport holds in place and the scroll gesture drives that section's animation to completion (progress 0→1), then the section unpins and normal scrolling continues. This replaced an earlier single full-page fixed background layer; if you find references to that design elsewhere, they're stale.
 
 | File | Role |
