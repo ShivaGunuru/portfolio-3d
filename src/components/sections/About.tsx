@@ -67,7 +67,6 @@ export function About() {
 
         <Stage
           progress={progress}
-          mode="turn"
           variant="harmonic"
           className="aspect-square w-full max-w-xl justify-self-center"
         />

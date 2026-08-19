@@ -1,36 +1,16 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import { Canvas } from '@react-three/fiber'
 
-import { usePortraitPoints } from '../hooks/usePortraitPoints'
+import { useHeroField } from '../hooks/useHeroField'
 import { HarmonicField } from './HarmonicField'
-import { HeadPoints, type HeadMode } from './HeadPoints'
+import { VideoField } from './VideoField'
 
 /**
- * Which scene a stage renders. `portrait` samples the photograph; `harmonic`
- * solves a spherical-harmonic field from an equation and has no source image.
+ * Which scene a stage renders. `video` samples the baked Hero clip; `harmonic`
+ * solves a spherical-harmonic field from an equation and has no source asset
+ * at all.
  */
-export type StageVariant = 'portrait' | 'harmonic'
-
-/**
- * The portrait photograph the point cloud is sampled from, resolved at build
- * time from `src/assets/portrait.*`.
- *
- * Resolving it with `import.meta.glob` rather than requesting a fixed public
- * path matters for two reasons. The file is optional, and probing a fixed URL
- * for a file that is not there logs a 404 in every visitor's console; this
- * emits no request at all when there is no portrait. It also means the image
- * is hashed and served with immutable cache headers like any other asset,
- * instead of being an unversioned public file.
- *
- * Any of the four extensions works. If none is present, `PORTRAIT_URL` is
- * undefined and the stage falls back to the parametric head.
- */
-const portraitModules = import.meta.glob<string>(
-  '../assets/portrait.{jpg,jpeg,png,webp}',
-  { eager: true, query: '?url', import: 'default' },
-)
-
-export const PORTRAIT_URL: string | undefined = Object.values(portraitModules)[0]
+export type StageVariant = 'video' | 'harmonic'
 
 /**
  * Reads a design token off the document. Tailwind's `@theme` emits every token
@@ -47,11 +27,10 @@ function readToken(name: string, fallback: string): string {
 interface HeadStageProps {
   /** 0..1 scroll-pin progress, owned by the section that renders this. */
   progress: RefObject<number>
-  mode: HeadMode
   className?: string
   /** Resolved by `Stage`, which already needs it to decide whether to load. */
   reducedMotion: boolean
-  variant?: StageVariant
+  variant: StageVariant
 }
 
 /**
@@ -65,10 +44,9 @@ interface HeadStageProps {
  */
 export function HeadStage({
   progress,
-  mode,
   className,
   reducedMotion,
-  variant = 'portrait',
+  variant,
 }: HeadStageProps) {
   const [isNearView, setIsNearView] = useState(false)
   const container = useRef<HTMLDivElement>(null)
@@ -81,13 +59,11 @@ export function HeadStage({
     glow: readToken('--color-head-glow', '#FFE3B0'),
   }))
 
-  // Only the portrait variant asks for the photograph. The harmonic field is
-  // solved from an equation, so requesting and sampling an image for it would
-  // be a hundred milliseconds of main-thread work for nothing.
-  const { data: portrait, status: portraitStatus } = usePortraitPoints(
-    variant === 'portrait' ? PORTRAIT_URL : undefined,
-    { baseColor: tokens.base, accentColor: tokens.accent },
-  )
+  // Only the video variant needs the baked asset. Fetching 3.2MB for a scene
+  // that would not use it is the exact waste the portrait loader avoided for
+  // the harmonic field before it.
+  const { data: heroField, status: heroFieldStatus } = useHeroField()
+  const wantsVideo = variant === 'video'
 
   useEffect(() => {
     const el = container.current
@@ -106,11 +82,9 @@ export function HeadStage({
     <div
       ref={container}
       className={className}
-      // Surfaces which source the cloud came from. 'ready' means the photo was
-      // sampled; 'unavailable' means it fell back to the parametric head. Makes
-      // a missing or unreadable portrait visible instead of silent.
-      data-portrait={portraitStatus}
-      data-points={portrait ? portrait.count : undefined}
+      // Surfaces load state for the video variant, so a slow or failed fetch
+      // of a 3.2MB asset is inspectable rather than silently blank.
+      data-hero-field={wantsVideo ? heroFieldStatus : undefined}
     >
       <Canvas
         // R3F writes `pointer-events: auto` inline on its own container, which
@@ -123,7 +97,7 @@ export function HeadStage({
         // paying for a live frame loop nobody can see or that shouldn't move.
         frameloop={reducedMotion || !isNearView ? 'demand' : 'always'}
       >
-        {variant === 'harmonic' ? (
+        {variant === 'harmonic' && (
           <HarmonicField
             baseColor={tokens.base}
             accentColor={tokens.accent}
@@ -132,16 +106,14 @@ export function HeadStage({
             still={reducedMotion}
             containerRef={container}
           />
-        ) : (
-          <HeadPoints
-            baseColor={tokens.base}
-            accentColor={tokens.accent}
+        )}
+        {wantsVideo && heroField && (
+          <VideoField
+            data={heroField}
             glowColor={tokens.glow}
             progress={progress}
-            mode={mode}
             still={reducedMotion}
             containerRef={container}
-            portrait={portrait}
           />
         )}
       </Canvas>

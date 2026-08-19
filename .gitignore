@@ -30,3 +30,6 @@ Thumbs.db
 
 # vercel
 .vercel
+
+# scratch frames extracted for src/dev/bake.html, never a shipped asset
+public/_bake-frames/

@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>bake hero video</title>
+    <style>
+      body {
+        background: #111;
+        color: #ddd;
+        font: 14px/1.5 ui-monospace, monospace;
+        max-width: 640px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+      h1 {
+        font-size: 16px;
+      }
+      pre {
+        background: #1a1a1a;
+        padding: 12px;
+        overflow-x: auto;
+      }
+      button {
+        font: inherit;
+        padding: 8px 16px;
+        margin-right: 8px;
+        cursor: pointer;
+      }
+      button:disabled {
+        cursor: default;
+        opacity: 0.5;
+      }
+      label {
+        display: block;
+        margin: 12px 0 4px;
+      }
+      input {
+        font: inherit;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 4px;
+      }
+      #log {
+        white-space: pre-wrap;
+      }
+      #preview {
+        max-width: 100%;
+        margin-top: 16px;
+        border: 1px solid #333;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>bake hero video</h1>
+    <p>
+      Dev-only tool. Rebuilds <code>src/assets/hero-field.bin</code> and
+      <code>hero-field.json</code> from a new set of extracted video frames.
+      Only run via <code>npm run dev</code>, never in the production build.
+    </p>
+
+    <p><strong>1.</strong> Extract frames with ffmpeg (already on PATH for this
+    project). From the project root:</p>
+    <pre>mkdir -p public/_bake-frames
+ffmpeg -i "path/to/source.mp4" -vf fps=&lt;FPS&gt; public/_bake-frames/frame%03d.png</pre>
+    <p>
+      Pick an FPS that lands you 40-60 frames across the clip's length; more
+      doesn't meaningfully improve smoothness since the runtime already
+      interpolates between baked frames, it just makes the bake slower.
+    </p>
+
+    <p><strong>2.</strong> Set the frame count below to match what ffmpeg
+    produced, then run the bake.</p>
+
+    <label for="count">Frame count</label>
+    <input id="count" type="number" value="50" min="2" />
+
+    <p style="margin-top: 16px">
+      <button id="run">Run bake</button>
+      <button id="download" disabled>Download bin + json</button>
+    </p>
+
+    <div id="log"></div>
+    <canvas id="preview" width="480" height="270"></canvas>
+
+    <p style="margin-top: 24px; opacity: 0.7">
+      <strong>3.</strong> Move both downloaded files into
+      <code>src/assets/</code>, overwriting the existing pair. Delete
+      <code>public/_bake-frames/</code> before committing; it's scratch input,
+      not a shipped asset. Then re-run <code>npm run build</code> and check the
+      result before pushing &mdash; a bad bake is a rendering regression, not a
+      typecheck error, so nothing here catches it for you.
+    </p>
+
+    <script type="module">
+      import { bakeHeroVideo } from './bakeHeroVideo.ts'
+
+      const log = document.getElementById('log')
+      const runBtn = document.getElementById('run')
+      const downloadBtn = document.getElementById('download')
+      const countInput = document.getElementById('count')
+      const preview = document.getElementById('preview')
+
+      const print = (msg) => {
+        log.textContent += msg + '\n'
+      }
+
+      let packed = null
+
+      function packResult(result) {
+        const positionsBytes = result.positions.byteLength
+        const colorsBytes = result.colors.byteLength
+        const randomsBytes = result.randoms.byteLength
+        const toneTextureBytes = result.toneTexture.byteLength
+        const total = positionsBytes + colorsBytes + randomsBytes + toneTextureBytes
+
+        const buf = new Uint8Array(total)
+        let off = 0
+        buf.set(new Uint8Array(result.positions.buffer, result.positions.byteOffset, positionsBytes), off)
+        off += positionsBytes
+        buf.set(new Uint8Array(result.colors.buffer, result.colors.byteOffset, colorsBytes), off)
+        off += colorsBytes
+        buf.set(new Uint8Array(result.randoms.buffer, result.randoms.byteOffset, randomsBytes), off)
+        off += randomsBytes
+        buf.set(new Uint8Array(result.toneTexture.buffer, result.toneTexture.byteOffset, toneTextureBytes), off)
+
+        const manifest = {
+          count: result.count,
+          frameCount: result.frameCount,
+          textureWidth: result.textureWidth,
+          textureHeight: result.textureHeight,
+          rowsPerFrame: result.rowsPerFrame,
+          positionsBytes,
+          colorsBytes,
+          randomsBytes,
+          toneTextureBytes,
+        }
+
+        return { buf, manifest }
+      }
+
+      function drawPreview(result) {
+        const ctx = preview.getContext('2d')
+        ctx.fillStyle = '#0b0c10'
+        ctx.fillRect(0, 0, preview.width, preview.height)
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
+        for (let i = 0; i < result.count; i++) {
+          const x = result.positions[i * 3]
+          const y = result.positions[i * 3 + 1]
+          if (x < minX) minX = x
+          if (x > maxX) maxX = x
+          if (y < minY) minY = y
+          if (y > maxY) maxY = y
+        }
+        const midFrame = Math.floor(result.frameCount / 2)
+        for (let i = 0; i < result.count; i++) {
+          const col = i % result.textureWidth
+          const rowInFrame = Math.floor(i / result.textureWidth)
+          const texRow = midFrame * result.rowsPerFrame + rowInFrame
+          const tone = result.toneTexture[texRow * result.textureWidth + col]
+          if (tone <= 0) continue
+          const x = ((result.positions[i * 3] - minX) / (maxX - minX)) * preview.width
+          const y = preview.height - ((result.positions[i * 3 + 1] - minY) / (maxY - minY)) * preview.height
+          const v = tone
+          ctx.fillStyle = `rgb(${v},${v},${v})`
+          ctx.fillRect(x, y, 1, 1)
+        }
+        preview.style.display = 'block'
+      }
+
+      runBtn.addEventListener('click', async () => {
+        runBtn.disabled = true
+        downloadBtn.disabled = true
+        log.textContent = ''
+        packed = null
+
+        const count = Math.max(2, Math.round(Number(countInput.value) || 50))
+        const urls = Array.from(
+          { length: count },
+          (_, i) => `/_bake-frames/frame${String(i + 1).padStart(3, '0')}.png`,
+        )
+
+        try {
+          print(`Baking ${count} frames...`)
+          const result = await bakeHeroVideo({
+            frameUrls: urls,
+            onProgress: (i, total) => {
+              log.textContent = log.textContent.replace(/\nLoading frame.*$/, '')
+              print(`Loading frame ${i}/${total}`)
+            },
+          })
+          print(`Done. count=${result.count} frameCount=${result.frameCount}`)
+          print(`textureWidth=${result.textureWidth} textureHeight=${result.textureHeight}`)
+          packed = packResult(result)
+          print(`Packed ${packed.buf.byteLength} bytes.`)
+          drawPreview(result)
+          downloadBtn.disabled = false
+        } catch (err) {
+          print(`ERROR: ${err.message}`)
+          console.error(err)
+        } finally {
+          runBtn.disabled = false
+        }
+      })
+
+      downloadBtn.addEventListener('click', () => {
+        if (!packed) return
+        const binBlob = new Blob([packed.buf], { type: 'application/octet-stream' })
+        const binUrl = URL.createObjectURL(binBlob)
+        const binLink = document.createElement('a')
+        binLink.href = binUrl
+        binLink.download = 'hero-field.bin'
+        binLink.click()
+        URL.revokeObjectURL(binUrl)
+
+        const jsonBlob = new Blob([JSON.stringify(packed.manifest, null, 2) + '\n'], {
+          type: 'application/json',
+        })
+        const jsonUrl = URL.createObjectURL(jsonBlob)
+        const jsonLink = document.createElement('a')
+        jsonLink.href = jsonUrl
+        jsonLink.download = 'hero-field.json'
+        jsonLink.click()
+        URL.revokeObjectURL(jsonUrl)
+      })
+    </script>
+  </body>
+</html>

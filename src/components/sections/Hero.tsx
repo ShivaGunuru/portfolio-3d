@@ -55,7 +55,7 @@ export function Hero() {
 
         <Stage
           progress={progress}
-          mode="assemble"
+          variant="video"
           className="aspect-square w-full max-w-xl justify-self-center"
         />
       </div>

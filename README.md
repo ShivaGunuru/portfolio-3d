@@ -25,7 +25,7 @@ npm test         # vitest
 
 ### The point cloud
 
-One shader, two scenes. Each of the Hero and About sections owns a canvas scoped
+Two scenes, two shaders. Each of the Hero and About sections owns a canvas scoped
 to its own layout column, pinned by ScrollTrigger while in view: the viewport
 holds still and the scroll gesture drives the animation to completion, then the
 section releases and the page continues.
@@ -36,12 +36,19 @@ thousands of positions in a JavaScript loop each frame, which cannot absorb a
 per-point cursor response on top. Moving the work to the GPU holds 60fps on
 integrated graphics, with hovering adding no measurable cost.
 
-The cloud is sampled from a portrait photograph when one is present at
-`src/assets/portrait.*`, and falls back to a parametric head volume
-when it is not. Background separation is a flood fill inward from the border, bounded so it can
-only claim backdrop-coloured pixels. Comparing against a reference colour, however
-carefully modelled, kept failing at the extremes of a vignette; an unbounded fill
-went the other way and hollowed the subject out through soft edges.
+About runs a generative spherical-harmonic field with no source image. Hero
+plays a real video: the subject is isolated from its background and turned into
+a particle field whose motion is locked to scroll, baked offline (`src/dev/bakeHeroVideo.ts`)
+rather than computed live, since per-frame background separation runs at
+roughly 175ms/frame, far too slow for scroll-scrubbing. Point positions are a
+fixed grid, unioned across every sampled frame of the source clip; only each
+point's tone (which frames it's visible in, and how bright) varies, read from a
+baked, tiled texture and blended between the two nearest frames by scroll
+position. Background separation itself is a flood fill inward from the border,
+bounded so it can only claim backdrop-coloured pixels. Comparing against a
+reference colour, however carefully modelled, kept failing at the extremes of a
+vignette; an unbounded fill went the other way and hollowed the subject out
+through soft edges.
 
 ### Performance
 
@@ -102,7 +109,9 @@ src/
   components/     sections and shared UI
   content/site.ts every rendered word on the site
   hooks/          smooth scroll, scroll pinning, pointer, reduced motion
-  three/          sampler, shaders, points, canvas, lazy boundary
+  three/          background separation, shaders, field components, canvas, lazy boundary
+  dev/            bakeHeroVideo.ts, the committed video-to-particle bake tool
+  assets/         baked hero field data (hero-field.bin/.json)
   index.css       design tokens. The only file with a hex value or font name
 docs/             content inventory and the locked visual direction
 ```
