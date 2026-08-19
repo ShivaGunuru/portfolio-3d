@@ -1,7 +1,6 @@
 import { Suspense, lazy, useEffect, useState, type RefObject } from 'react'
 
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
-import type { StageVariant } from './HeadStage'
 
 /**
  * Deferred so that three.js, which is by far the heaviest dependency, is not
@@ -16,8 +15,6 @@ interface StageProps {
   progress: RefObject<number>
   /** Applied to the reserved box, not to the canvas. */
   className?: string
-  /** Which scene to render. */
-  variant: StageVariant
 }
 
 /**
@@ -34,7 +31,7 @@ interface StageProps {
  *    three.js. That is the difference between a lighter mobile experience and
  *    a desktop scene that merely renders nothing after paying for itself.
  */
-export function Stage({ progress, className, variant }: StageProps) {
+export function Stage({ progress, className }: StageProps) {
   const reducedMotion = usePrefersReducedMotion()
   const [isCompact, setIsCompact] = useState(() =>
     window.matchMedia('(max-width: 768px)').matches,
@@ -83,7 +80,6 @@ export function Stage({ progress, className, variant }: StageProps) {
             progress={progress}
             className="h-full w-full"
             reducedMotion={reducedMotion}
-            variant={variant}
           />
         </Suspense>
       )}

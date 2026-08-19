@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>bake hero video</title>
+    <title>bake hero cutout</title>
     <style>
       body {
         background: #111;
@@ -43,20 +43,32 @@
       #log {
         white-space: pre-wrap;
       }
+      /* Checkerboard so a transparent sprite background is visibly
+         transparent, not just "matches the page background". */
       #preview {
         max-width: 100%;
         margin-top: 16px;
         border: 1px solid #333;
         display: none;
+        background-image:
+          linear-gradient(45deg, #444 25%, transparent 25%),
+          linear-gradient(-45deg, #444 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #444 75%),
+          linear-gradient(-45deg, transparent 75%, #444 75%);
+        background-size: 16px 16px;
+        background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
       }
     </style>
   </head>
   <body>
-    <h1>bake hero video</h1>
+    <h1>bake hero cutout</h1>
     <p>
-      Dev-only tool. Rebuilds <code>src/assets/hero-field.bin</code> and
-      <code>hero-field.json</code> from a new set of extracted video frames.
-      Only run via <code>npm run dev</code>, never in the production build.
+      Dev-only tool. Rebuilds <code>src/assets/hero-cutout.png</code> and
+      <code>hero-cutout.json</code> from a new set of extracted video frames:
+      the subject with its background removed, packed into a sprite sheet the
+      Hero section steps through as the page scrolls. No particles, no shader
+      effects &mdash; this is real video pixels. Only run via
+      <code>npm run dev</code>, never in the production build.
     </p>
 
     <p><strong>1.</strong> Extract frames with ffmpeg (already on PATH for this
@@ -64,24 +76,25 @@
     <pre>mkdir -p public/_bake-frames
 ffmpeg -i "path/to/source.mp4" -vf fps=&lt;FPS&gt; public/_bake-frames/frame%03d.png</pre>
     <p>
-      Pick an FPS that lands you 40-60 frames across the clip's length; more
-      doesn't meaningfully improve smoothness since the runtime already
-      interpolates between baked frames, it just makes the bake slower.
+      Pick an FPS that lands you 30-45 frames across the clip's length.
+      Unlike a particle bake, this one steps directly to the nearest frame
+      rather than blending, so closer-spaced frames make the scroll motion
+      look smoother; going much above 45 mostly just grows the sprite sheet.
     </p>
 
     <p><strong>2.</strong> Set the frame count below to match what ffmpeg
     produced, then run the bake.</p>
 
     <label for="count">Frame count</label>
-    <input id="count" type="number" value="50" min="2" />
+    <input id="count" type="number" value="36" min="2" />
 
     <p style="margin-top: 16px">
       <button id="run">Run bake</button>
-      <button id="download" disabled>Download bin + json</button>
+      <button id="download" disabled>Download png + json</button>
     </p>
 
     <div id="log"></div>
-    <canvas id="preview" width="480" height="270"></canvas>
+    <canvas id="preview"></canvas>
 
     <p style="margin-top: 24px; opacity: 0.7">
       <strong>3.</strong> Move both downloaded files into
@@ -93,7 +106,7 @@ ffmpeg -i "path/to/source.mp4" -vf fps=&lt;FPS&gt; public/_bake-frames/frame%03d
     </p>
 
     <script type="module">
-      import { bakeHeroVideo } from './bakeHeroVideo.ts'
+      import { bakeHeroCutout } from './bakeHeroCutout.ts'
 
       const log = document.getElementById('log')
       const runBtn = document.getElementById('run')
@@ -105,66 +118,14 @@ ffmpeg -i "path/to/source.mp4" -vf fps=&lt;FPS&gt; public/_bake-frames/frame%03d
         log.textContent += msg + '\n'
       }
 
-      let packed = null
+      let baked = null
 
-      function packResult(result) {
-        const positionsBytes = result.positions.byteLength
-        const colorsBytes = result.colors.byteLength
-        const randomsBytes = result.randoms.byteLength
-        const toneTextureBytes = result.toneTexture.byteLength
-        const total = positionsBytes + colorsBytes + randomsBytes + toneTextureBytes
-
-        const buf = new Uint8Array(total)
-        let off = 0
-        buf.set(new Uint8Array(result.positions.buffer, result.positions.byteOffset, positionsBytes), off)
-        off += positionsBytes
-        buf.set(new Uint8Array(result.colors.buffer, result.colors.byteOffset, colorsBytes), off)
-        off += colorsBytes
-        buf.set(new Uint8Array(result.randoms.buffer, result.randoms.byteOffset, randomsBytes), off)
-        off += randomsBytes
-        buf.set(new Uint8Array(result.toneTexture.buffer, result.toneTexture.byteOffset, toneTextureBytes), off)
-
-        const manifest = {
-          count: result.count,
-          frameCount: result.frameCount,
-          textureWidth: result.textureWidth,
-          textureHeight: result.textureHeight,
-          rowsPerFrame: result.rowsPerFrame,
-          positionsBytes,
-          colorsBytes,
-          randomsBytes,
-          toneTextureBytes,
-        }
-
-        return { buf, manifest }
-      }
-
-      function drawPreview(result) {
+      function showPreview(result) {
+        preview.width = result.spriteCanvas.width
+        preview.height = result.spriteCanvas.height
         const ctx = preview.getContext('2d')
-        ctx.fillStyle = '#0b0c10'
-        ctx.fillRect(0, 0, preview.width, preview.height)
-        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
-        for (let i = 0; i < result.count; i++) {
-          const x = result.positions[i * 3]
-          const y = result.positions[i * 3 + 1]
-          if (x < minX) minX = x
-          if (x > maxX) maxX = x
-          if (y < minY) minY = y
-          if (y > maxY) maxY = y
-        }
-        const midFrame = Math.floor(result.frameCount / 2)
-        for (let i = 0; i < result.count; i++) {
-          const col = i % result.textureWidth
-          const rowInFrame = Math.floor(i / result.textureWidth)
-          const texRow = midFrame * result.rowsPerFrame + rowInFrame
-          const tone = result.toneTexture[texRow * result.textureWidth + col]
-          if (tone <= 0) continue
-          const x = ((result.positions[i * 3] - minX) / (maxX - minX)) * preview.width
-          const y = preview.height - ((result.positions[i * 3 + 1] - minY) / (maxY - minY)) * preview.height
-          const v = tone
-          ctx.fillStyle = `rgb(${v},${v},${v})`
-          ctx.fillRect(x, y, 1, 1)
-        }
+        ctx.clearRect(0, 0, preview.width, preview.height)
+        ctx.drawImage(result.spriteCanvas, 0, 0)
         preview.style.display = 'block'
       }
 
@@ -172,9 +133,9 @@ ffmpeg -i "path/to/source.mp4" -vf fps=&lt;FPS&gt; public/_bake-frames/frame%03d
         runBtn.disabled = true
         downloadBtn.disabled = true
         log.textContent = ''
-        packed = null
+        baked = null
 
-        const count = Math.max(2, Math.round(Number(countInput.value) || 50))
+        const count = Math.max(2, Math.round(Number(countInput.value) || 36))
         const urls = Array.from(
           { length: count },
           (_, i) => `/_bake-frames/frame${String(i + 1).padStart(3, '0')}.png`,
@@ -182,18 +143,18 @@ ffmpeg -i "path/to/source.mp4" -vf fps=&lt;FPS&gt; public/_bake-frames/frame%03d
 
         try {
           print(`Baking ${count} frames...`)
-          const result = await bakeHeroVideo({
+          const result = await bakeHeroCutout({
             frameUrls: urls,
             onProgress: (i, total) => {
               log.textContent = log.textContent.replace(/\nLoading frame.*$/, '')
               print(`Loading frame ${i}/${total}`)
             },
           })
-          print(`Done. count=${result.count} frameCount=${result.frameCount}`)
-          print(`textureWidth=${result.textureWidth} textureHeight=${result.textureHeight}`)
-          packed = packResult(result)
-          print(`Packed ${packed.buf.byteLength} bytes.`)
-          drawPreview(result)
+          print(`Done. frameCount=${result.frameCount} grid=${result.columns}x${result.rows}`)
+          print(`frameWidth=${result.frameWidth} frameHeight=${result.frameHeight}`)
+          print(`sprite ${result.spriteCanvas.width}x${result.spriteCanvas.height}`)
+          baked = result
+          showPreview(result)
           downloadBtn.disabled = false
         } catch (err) {
           print(`ERROR: ${err.message}`)
@@ -204,22 +165,32 @@ ffmpeg -i "path/to/source.mp4" -vf fps=&lt;FPS&gt; public/_bake-frames/frame%03d
       })
 
       downloadBtn.addEventListener('click', () => {
-        if (!packed) return
-        const binBlob = new Blob([packed.buf], { type: 'application/octet-stream' })
-        const binUrl = URL.createObjectURL(binBlob)
-        const binLink = document.createElement('a')
-        binLink.href = binUrl
-        binLink.download = 'hero-field.bin'
-        binLink.click()
-        URL.revokeObjectURL(binUrl)
+        if (!baked) return
 
-        const jsonBlob = new Blob([JSON.stringify(packed.manifest, null, 2) + '\n'], {
+        baked.spriteCanvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = 'hero-cutout.png'
+          link.click()
+          URL.revokeObjectURL(url)
+          print(`Downloaded hero-cutout.png (${(blob.size / 1024).toFixed(0)} KB)`)
+        }, 'image/png')
+
+        const manifest = {
+          frameCount: baked.frameCount,
+          columns: baked.columns,
+          rows: baked.rows,
+          frameWidth: baked.frameWidth,
+          frameHeight: baked.frameHeight,
+        }
+        const jsonBlob = new Blob([JSON.stringify(manifest, null, 2) + '\n'], {
           type: 'application/json',
         })
         const jsonUrl = URL.createObjectURL(jsonBlob)
         const jsonLink = document.createElement('a')
         jsonLink.href = jsonUrl
-        jsonLink.download = 'hero-field.json'
+        jsonLink.download = 'hero-cutout.json'
         jsonLink.click()
         URL.revokeObjectURL(jsonUrl)
       })

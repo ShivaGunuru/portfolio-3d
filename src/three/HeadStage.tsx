@@ -1,16 +1,7 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import { Canvas } from '@react-three/fiber'
 
-import { useHeroField } from '../hooks/useHeroField'
 import { HarmonicField } from './HarmonicField'
-import { VideoField } from './VideoField'
-
-/**
- * Which scene a stage renders. `video` samples the baked Hero clip; `harmonic`
- * solves a spherical-harmonic field from an equation and has no source asset
- * at all.
- */
-export type StageVariant = 'video' | 'harmonic'
 
 /**
  * Reads a design token off the document. Tailwind's `@theme` emits every token
@@ -30,24 +21,24 @@ interface HeadStageProps {
   className?: string
   /** Resolved by `Stage`, which already needs it to decide whether to load. */
   reducedMotion: boolean
-  variant: StageVariant
 }
 
 /**
- * A single section's 3D scene, scoped to its own layout column rather than
- * being a page-wide background layer.
+ * About's 3D scene, scoped to its own layout column rather than being a
+ * page-wide background layer. Hero no longer renders through here: it plays
+ * a background-removed video cutout instead, a plain 2D canvas with no
+ * shader effects, so it has no three.js dependency at all (see
+ * `HeroCutoutStage.tsx`). This module now only ever renders the harmonic
+ * field, but keeps the name `HeadStage` rather than becoming
+ * `AboutStage`, since a second 3D stage may exist again in the future and
+ * this is where it would slot back in.
  *
  * This module is loaded lazily by `Stage`, which owns the breakpoint check and
  * reserves the layout box beforehand. Importing three.js is therefore already
  * a decision by the time this renders: it is only reached on viewports that
  * will actually show a scene.
  */
-export function HeadStage({
-  progress,
-  className,
-  reducedMotion,
-  variant,
-}: HeadStageProps) {
+export function HeadStage({ progress, className, reducedMotion }: HeadStageProps) {
   const [isNearView, setIsNearView] = useState(false)
   const container = useRef<HTMLDivElement>(null)
 
@@ -58,12 +49,6 @@ export function HeadStage({
     accent: readToken('--color-accent', '#E8A33D'),
     glow: readToken('--color-head-glow', '#FFE3B0'),
   }))
-
-  // Only the video variant needs the baked asset. Fetching 3.2MB for a scene
-  // that would not use it is the exact waste the portrait loader avoided for
-  // the harmonic field before it.
-  const { data: heroField, status: heroFieldStatus } = useHeroField()
-  const wantsVideo = variant === 'video'
 
   useEffect(() => {
     const el = container.current
@@ -79,13 +64,7 @@ export function HeadStage({
   }, [])
 
   return (
-    <div
-      ref={container}
-      className={className}
-      // Surfaces load state for the video variant, so a slow or failed fetch
-      // of a 3.2MB asset is inspectable rather than silently blank.
-      data-hero-field={wantsVideo ? heroFieldStatus : undefined}
-    >
+    <div ref={container} className={className}>
       <Canvas
         // R3F writes `pointer-events: auto` inline on its own container, which
         // would let the canvas swallow clicks on whatever sits near it.
@@ -97,25 +76,14 @@ export function HeadStage({
         // paying for a live frame loop nobody can see or that shouldn't move.
         frameloop={reducedMotion || !isNearView ? 'demand' : 'always'}
       >
-        {variant === 'harmonic' && (
-          <HarmonicField
-            baseColor={tokens.base}
-            accentColor={tokens.accent}
-            glowColor={tokens.glow}
-            progress={progress}
-            still={reducedMotion}
-            containerRef={container}
-          />
-        )}
-        {wantsVideo && heroField && (
-          <VideoField
-            data={heroField}
-            glowColor={tokens.glow}
-            progress={progress}
-            still={reducedMotion}
-            containerRef={container}
-          />
-        )}
+        <HarmonicField
+          baseColor={tokens.base}
+          accentColor={tokens.accent}
+          glowColor={tokens.glow}
+          progress={progress}
+          still={reducedMotion}
+          containerRef={container}
+        />
       </Canvas>
     </div>
   )

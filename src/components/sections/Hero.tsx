@@ -2,7 +2,7 @@ import { useRef } from 'react'
 
 import { hero, site } from '../../content/site'
 import { usePinnedStage } from '../../hooks/usePinnedStage'
-import { Stage } from '../../three/Stage'
+import { HeroCutoutStage } from '../HeroCutoutStage'
 import { Reveal } from '../Reveal'
 
 export function Hero() {
@@ -53,9 +53,8 @@ export function Hero() {
           </div>
         </Reveal>
 
-        <Stage
+        <HeroCutoutStage
           progress={progress}
-          variant="video"
           className="aspect-square w-full max-w-xl justify-self-center"
         />
       </div>

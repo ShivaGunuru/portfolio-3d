@@ -51,6 +51,45 @@ export interface BackgroundSeparationOptions {
   }
 }
 
+/** Mean RGB (0..255 each) of the top strip of an RGBA buffer, `referenceBand`
+ *  fraction of its height: the reference colour every pixel is compared
+ *  against below. */
+function computeBackdropReference(
+  data: Uint8ClampedArray | Uint8Array,
+  width: number,
+  height: number,
+  referenceBand = 0.05,
+): { r: number; g: number; b: number } {
+  const topBand = Math.max(1, Math.round(height * referenceBand))
+  let r = 0
+  let g = 0
+  let b = 0
+  let n = 0
+  for (let y = 0; y < topBand; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4
+      r += data[i]
+      g += data[i + 1]
+      b += data[i + 2]
+      n++
+    }
+  }
+  return { r: r / n, g: g / n, b: b / n }
+}
+
+/** Euclidean RGB distance (0..~1.73) from pixel `index` to `ref`. */
+function backdropColorDistance(
+  data: Uint8ClampedArray | Uint8Array,
+  index: number,
+  ref: { r: number; g: number; b: number },
+): number {
+  const i = index * 4
+  const dr = (data[i] - ref.r) / 255
+  const dg = (data[i + 1] - ref.g) / 255
+  const db = (data[i + 2] - ref.b) / 255
+  return Math.sqrt(dr * dr + dg * dg + db * db)
+}
+
 /**
  * Returns a `width * height` mask, 1 where a pixel is classified as backdrop,
  * 0 where it is subject. `data` is a flat RGBA buffer, e.g. from
@@ -67,36 +106,13 @@ export function separateBackground(
     seedEdges = { top: true, bottom: false, left: true, right: true },
   }: BackgroundSeparationOptions = {},
 ): Uint8Array {
-  const at = (x: number, y: number) => (y * width + x) * 4
-
-  const topBand = Math.max(1, Math.round(height * referenceBand))
-  let gR = 0
-  let gG = 0
-  let gB = 0
-  let gN = 0
-  for (let y = 0; y < topBand; y++) {
-    for (let x = 0; x < width; x++) {
-      const i = at(x, y)
-      gR += data[i]
-      gG += data[i + 1]
-      gB += data[i + 2]
-      gN++
-    }
-  }
-  gR /= gN
-  gG /= gN
-  gB /= gN
+  const ref = computeBackdropReference(data, width, height, referenceBand)
 
   const isBackground = new Uint8Array(width * height)
   const stack: number[] = []
 
-  const plausiblyBackdrop = (x: number, y: number) => {
-    const i = at(x, y)
-    const dr = (data[i] - gR) / 255
-    const dg = (data[i + 1] - gG) / 255
-    const db = (data[i + 2] - gB) / 255
-    return Math.sqrt(dr * dr + dg * dg + db * db) < backdropBound
-  }
+  const plausiblyBackdrop = (x: number, y: number) =>
+    backdropColorDistance(data, y * width + x, ref) < backdropBound
 
   const push = (x: number, y: number) => {
     const idx = y * width + x
