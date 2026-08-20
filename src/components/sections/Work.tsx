@@ -2,6 +2,7 @@ import { projects, work } from '../../content/site'
 import type { Project } from '../../content/site'
 import { Reveal } from '../Reveal'
 import { SectionHeading } from '../SectionHeading'
+import { TypeOnScroll } from '../TypeOnScroll'
 
 function ProjectCard({ project, isLast }: { project: Project; isLast: boolean }) {
   const headingId = `${project.id}-heading`
@@ -23,9 +24,10 @@ function ProjectCard({ project, isLast }: { project: Project; isLast: boolean })
           {project.title}
         </h3>
 
-        <p className="text-lg leading-snug font-light text-accent text-pretty sm:text-[19px]">
-          {project.hook}
-        </p>
+        <TypeOnScroll
+          text={project.hook}
+          className="text-lg leading-snug font-light text-accent text-pretty sm:text-[19px]"
+        />
 
         <ul className="mt-1.5 flex flex-wrap gap-2">
           {project.tags.map((tag) => (

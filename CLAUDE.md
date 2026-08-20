@@ -62,6 +62,21 @@ Fonts are **self-hosted via `@fontsource`**, never loaded from the Google Fonts 
 
 **Work and Contact have no 3D or canvas at all.**
 
+### Work: the typed project hooks
+
+Each project's hook line types itself out as it scrolls into view, led by a drawn pointer that moves in, clicks the insertion point, and hands over to a blinking caret (`src/components/TypeOnScroll.tsx`). Only the hook is typed, not the detail bodies: a hook is around 90 characters and lands in about 1.5s, where a 250-character detail body would read as waiting rather than typing.
+
+**Two ordering rules keep it from breaking the site's content guarantees, and both are easy to undo by accident:**
+
+- **The split happens when the ScrollTrigger fires, never at mount.** An earlier revision built the character spans in the effect body, which left every hook sitting at `color: transparent` from load until its trigger fired. A trigger that never fires (a script error, a refresh landing oddly) would then have hidden that copy permanently. Verified after the fix: before scrolling, all four hooks are plain text with zero spans.
+- **Characters are hidden with `color: transparent`, not `visibility` or `display`.** Transparent text stays in the accessibility tree and keeps its layout box, so the line is readable to assistive tech while animating and nothing reflows as it fills in. The other two would drop it from the tree and, for `display`, collapse the line.
+
+**The pointer must be anchored `left: 0; top: 0`.** It is absolutely positioned inside the paragraph, and an absolutely-positioned element with no offsets keeps its *static* position, which for one appended after the text is wherever the text flow ended. Without the anchor every transform is measured from the end of the last line: measured, the pointer settled 256px right of its target. With it, the pointer lands exactly on the first character.
+
+**The caret is re-inserted into the DOM after the last revealed character each frame**, rather than positioned by coordinate. Line breaking then carries it onto the next line for free, which a tracked coordinate would get wrong the moment the text wraps.
+
+The drawn pointer is skipped under `(pointer: coarse)`, since imitating a mouse cursor on a touch device is a lie. Typing still runs there. Under `prefers-reduced-motion` nothing runs at all and the text is simply never touched.
+
 ### The Hero cutout
 
 `src/components/HeroCutoutStage.tsx` (mobile-hide, idle-deferred load, matches `Stage.tsx`'s shape) renders `HeroCutout.tsx`, a `<canvas>` that steps through a baked sprite sheet of the subject with the background removed, driven by the same `usePinnedStage` scroll progress every other stage uses. No WebGL, no shader, no glow, no hover effect: the brief was explicitly "clean... subject as it is... no effects."
