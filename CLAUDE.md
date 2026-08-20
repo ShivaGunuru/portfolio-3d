@@ -73,6 +73,8 @@ Each project's hook line types itself out as it scrolls into view, led by a draw
 
 **The pointer must be anchored `left: 0; top: 0`.** It is absolutely positioned inside the paragraph, and an absolutely-positioned element with no offsets keeps its *static* position, which for one appended after the text is wherever the text flow ended. Without the anchor every transform is measured from the end of the last line: measured, the pointer settled 256px right of its target. With it, the pointer lands exactly on the first character.
 
+**Split characters use a plain space, never `&nbsp;`.** An early revision substituted U+00A0 for every space, reasoning that spaces might collapse while their neighbours were hidden. They would not have: collapsing applies to *sequences* of whitespace, and each space here sits alone inside its own span. What it did do was make the entire line unbreakable, so the hook ran straight out of its grid column and across the detail column beside it. The regression check that catches this is comparing line count before and after the split: they must match, since the split is not supposed to change layout at all.
+
 **The caret is re-inserted into the DOM after the last revealed character each frame**, rather than positioned by coordinate. Line breaking then carries it onto the next line for free, which a tracked coordinate would get wrong the moment the text wraps.
 
 The drawn pointer is skipped under `(pointer: coarse)`, since imitating a mouse cursor on a touch device is a lie. Typing still runs there. Under `prefers-reduced-motion` nothing runs at all and the text is simply never touched.

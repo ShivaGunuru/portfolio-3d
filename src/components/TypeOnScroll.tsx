@@ -68,9 +68,13 @@ export function TypeOnScroll({ text, className, delay = 0 }: TypeOnScrollProps) 
         const frag = document.createDocumentFragment()
         for (const ch of text) {
           const span = document.createElement('span')
-          // A space must not collapse mid-line while its neighbours are
-          // hidden, or the line would visibly re-space itself as it types.
-          span.textContent = ch === ' ' ? ' ' : ch
+          // A plain space, never a non-breaking one. An earlier revision used
+          // U+00A0 here to stop spaces collapsing, which they were never
+          // going to do: collapsing applies to *sequences* of whitespace, and
+          // each space here is alone inside its own span. What it did do was
+          // make the whole line unbreakable, so it ran straight out of its
+          // grid column instead of wrapping.
+          span.textContent = ch
           span.style.color = 'transparent'
           frag.append(span)
           chars.push(span)
