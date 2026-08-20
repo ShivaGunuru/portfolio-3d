@@ -1,4 +1,7 @@
-import { separateBackground } from '../three/backgroundSeparation'
+import {
+  computeBackdropReference,
+  separateBackground,
+} from '../three/backgroundSeparation'
 
 /**
  * Bakes a sequence of video frames into a background-removed sprite sheet
@@ -33,6 +36,10 @@ export interface CutoutBakeConfig {
   backgroundTolerance?: number
   /** Global bound on how far a filled pixel may sit from the backdrop reference. */
   backdropBound?: number
+  /** Colour bound for promoting an enclosed backdrop pocket to a fill seed. */
+  pocketBound?: number
+  /** Minimum pocket size to promote, as a fraction of total frame area. */
+  pocketMinAreaFraction?: number
   onProgress?: (frameIndex: number, total: number) => void
 }
 
@@ -223,23 +230,32 @@ export async function bakeHeroCutout({
   // raise this before reaching for anything else.
   erodePx = 3,
   backgroundTolerance = 0.055,
-  // Higher than the portrait-era default of 0.3. This clip's backdrop is not
-  // evenly lit: a region can sit far enough from the single top-strip
-  // reference colour to fail a tighter bound even though it's plainly
-  // backdrop by eye, and since it's real fabric texture (not a flat colour)
-  // a patch like that can be large enough to fully wall off part of itself
-  // from the seeded borders, which local-continuity flood fill alone can't
-  // cross. Measured on frame 29 of 36 (the clip's darkest stretch, where the
-  // gap is worst): subject-classified area drops from 54.5% at 0.3 to 46.5%
-  // at 0.4, then flattens, so 0.4 is the point past which more tolerance
-  // stops buying anything. A per-pixel colour-distance cleanup pass was
-  // tried first instead of raising this and rejected: being neighbour-blind,
-  // it also ate into beard and hair detail wherever a stray pixel's colour
-  // happened to fall inside the bound by chance. Raising the bound keeps the
-  // fix inside the flood fill, which only ever admits a pixel that is both
-  // colour-plausible and continuous with an already-admitted neighbour, so
-  // it can't do that.
-  backdropBound = 0.4,
+  // An earlier revision raised this to 0.4 purely to muscle the flood fill
+  // into backdrop pockets the subject's silhouette had walled off from the
+  // seeded borders. `pocketBound` below now handles those directly, so this
+  // is back to a value chosen for what it actually governs: how far a pixel
+  // may sit from the backdrop reference before it stops being credible as
+  // backdrop at all. Keeping it tight is what protects hair and beard edges.
+  backdropBound = 0.32,
+  // Enclosed-pocket recovery, see `separateBackground`. The hue gate there,
+  // not this bound, is what keeps the pass off the subject, so this can stay
+  // loose enough to cover a uniformly-lit-but-dim corner of the backdrop.
+  // Measured on this clip: the real pockets sit 0.20 to 0.32 from the shared
+  // reference, so a tighter bound simply never fires.
+  pocketBound = 0.38,
+  // 0.1% of frame area, about 176px at this sample size. The pockets that
+  // matter measured 4398 and 2253 px, clearing this by an order of magnitude.
+  //
+  // Do not lower it to chase the last few specks. The hue gate in
+  // `separateBackground` rejects skin outright, but hair *highlights* are
+  // neutral grey, which is the same signature the backdrop has, so they are
+  // held out by area alone. Dropping this floor to 0.0005 (88px) was tried:
+  // it cleared the leftover 149 to 160 px specks and then went on to bite
+  // visible chunks out of the hairline, because lit hair forms neutral
+  // regions in that same size range. Specks are a far smaller problem than
+  // holes in the hair. If specks ever need attacking, do it with something
+  // that can tell a highlight from a gap, not by relaxing this.
+  pocketMinAreaFraction = 0.001,
   onProgress,
 }: CutoutBakeConfig): Promise<BakedCutout> {
   if (frameUrls.length === 0) throw new Error('bakeHeroCutout: no frames given')
@@ -259,23 +275,53 @@ export async function bakeHeroCutout({
   const frameData: ImageData[] = new Array(frameCount)
   const frameMasks: Uint8Array[] = new Array(frameCount)
 
+  // Pass 1: decode every frame, and average their individual backdrop
+  // references into one shared reference.
+  //
+  // This is the main defence against flicker. Letting each frame derive its
+  // own reference means an exposure or white-balance drift between frames
+  // moves the classification threshold itself, so the silhouette breathes
+  // frame to frame even where the subject is perfectly still: the thing being
+  // measured did not change, the ruler did. One reference for the whole clip
+  // makes every frame's mask answer the same question.
+  let refR = 0
+  let refG = 0
+  let refB = 0
   for (let f = 0; f < frameCount; f++) {
     const img = f === 0 ? first : await loadImage(frameUrls[f])
     workCtx.clearRect(0, 0, w, h)
     workCtx.drawImage(img, 0, 0, w, h)
     const data = workCtx.getImageData(0, 0, w, h)
+    frameData[f] = data
 
-    const rawMask = separateBackground(data.data, w, h, {
+    const ref = computeBackdropReference(data.data, w, h)
+    refR += ref.r
+    refG += ref.g
+    refB += ref.b
+    onProgress?.(f + 1, frameCount * 2)
+  }
+  const sharedReference = {
+    r: refR / frameCount,
+    g: refG / frameCount,
+    b: refB / frameCount,
+  }
+
+  // Pass 2: separate every frame against that one shared reference.
+  const pocketMinArea = Math.max(1, Math.round(w * h * pocketMinAreaFraction))
+  for (let f = 0; f < frameCount; f++) {
+    const rawMask = separateBackground(frameData[f].data, w, h, {
       stepTolerance: backgroundTolerance,
       backdropBound,
+      reference: sharedReference,
+      pocketBound,
+      pocketMinArea,
       // Same reasoning as the particle bake: shoulders/chest run off the
       // bottom of every frame in this clip.
       seedEdges: { top: true, bottom: false, left: true, right: true },
     })
 
-    frameData[f] = data
     frameMasks[f] = keepLargestComponent(rawMask, w, h)
-    onProgress?.(f + 1, frameCount)
+    onProgress?.(frameCount + f + 1, frameCount * 2)
   }
 
   // --- union bounding box across every frame's subject pixels -------------
