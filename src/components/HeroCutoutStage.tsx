@@ -1,8 +1,17 @@
 import { useEffect, useState, type RefObject } from 'react'
 
+import cutoutManifest from '../assets/hero-cutout.json'
 import { useHeroCutout } from '../hooks/useHeroCutout'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 import { HeroCutout } from './HeroCutout'
+
+// The manifest is a small bundled JSON import, not a fetch, so its aspect
+// ratio is known synchronously at module load: the reserved box below can
+// use the sprite's real proportions from the very first render instead of a
+// guessed placeholder ratio, with nothing to correct once the sprite sheet
+// itself arrives later. That's what keeps this CLS-safe despite the sprite
+// being lazy-loaded.
+const cutoutAspectRatio = cutoutManifest.frameWidth / cutoutManifest.frameHeight
 
 interface LoaderProps {
   progress: RefObject<number>
@@ -77,7 +86,7 @@ export function HeroCutoutStage({ progress, className }: HeroCutoutStageProps) {
   if (isCompact) return null
 
   return (
-    <div className={className} aria-hidden="true">
+    <div className={className} style={{ aspectRatio: cutoutAspectRatio }} aria-hidden="true">
       {mayLoad && <HeroCutoutLoader progress={progress} still={reducedMotion} />}
     </div>
   )

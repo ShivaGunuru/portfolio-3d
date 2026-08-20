@@ -16,7 +16,7 @@ export function Hero() {
       ref={sectionRef}
       className="relative flex min-h-svh flex-col justify-center overflow-hidden"
     >
-      <div className="page-shell relative z-10 grid w-full items-center gap-16 md:grid-cols-2">
+      <div className="page-shell relative z-10 grid w-full items-center gap-16 md:grid-cols-[1fr_1.2fr]">
         <Reveal
           className="flex max-w-160 flex-col gap-6 sm:gap-[26px]"
           stagger={0.1}
@@ -55,7 +55,7 @@ export function Hero() {
 
         <HeroCutoutStage
           progress={progress}
-          className="aspect-square w-full max-w-xl justify-self-center"
+          className="w-full max-w-2xl justify-self-center"
         />
       </div>
     </section>

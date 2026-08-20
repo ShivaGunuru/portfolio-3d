@@ -27,6 +27,8 @@ export interface CutoutBakeConfig {
   sampleWidth?: number
   /** Feather radius in source pixels for the alpha edge. */
   featherPx?: number
+  /** Erosion depth in source pixels, stripped before feathering. */
+  erodePx?: number
   /** Per-step tolerance for the background flood fill. */
   backgroundTolerance?: number
   /** Global bound on how far a filled pixel may sit from the backdrop reference. */
@@ -137,26 +139,34 @@ function keepLargestComponent(mask: Uint8Array, w: number, h: number): Uint8Arra
   return out
 }
 
-/** 4-neighbourhood erosion: a subject pixel next to any background pixel
- *  becomes background too. Strips the ring of mixed subject/backdrop colour
- *  the source video's own encoding leaves right at the silhouette edge,
- *  which would otherwise show through as a faint colour fringe once
- *  feathered into a soft alpha. */
-function erode(mask: Uint8Array, w: number, h: number): Uint8Array {
-  const out = new Uint8Array(mask)
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const i = y * w + x
-      if (mask[i]) continue // already background
-      const bg =
-        (x > 0 && mask[i - 1]) ||
-        (x < w - 1 && mask[i + 1]) ||
-        (y > 0 && mask[i - w]) ||
-        (y < h - 1 && mask[i + w])
-      if (bg) out[i] = 1
+/** 4-neighbourhood erosion, `iterations` deep: a subject pixel within
+ *  `iterations` steps of any background pixel becomes background too. Strips
+ *  the ring of mixed subject/backdrop colour the source video's own encoding
+ *  leaves right at the silhouette edge, which would otherwise show through
+ *  once feathered into a soft alpha, at whatever brightness the backdrop
+ *  happens to be: a muted colour reads as a faint fringe, but a white
+ *  backdrop reads as a stark, obviously wrong outline against this site's
+ *  dark background. One iteration was enough for the former; not the
+ *  latter, hence this taking a depth instead of being fixed at one step. */
+function erode(mask: Uint8Array, w: number, h: number, iterations = 1): Uint8Array {
+  let current = mask
+  for (let step = 0; step < iterations; step++) {
+    const out = new Uint8Array(current)
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = y * w + x
+        if (current[i]) continue // already background
+        const bg =
+          (x > 0 && current[i - 1]) ||
+          (x < w - 1 && current[i + 1]) ||
+          (y > 0 && current[i - w]) ||
+          (y < h - 1 && current[i + w])
+        if (bg) out[i] = 1
+      }
     }
+    current = out
   }
-  return out
+  return current
 }
 
 /** Separable box blur over a 0/1 subject field, producing a smooth 0..1
@@ -204,6 +214,14 @@ export async function bakeHeroCutout({
   frameUrls,
   sampleWidth = 560,
   featherPx = 2,
+  // 1 was enough against the first source video's muted gray backdrop, where
+  // leftover contaminated-edge pixels read as a faint colour fringe. Against
+  // a white backdrop the same leftover ring reads as a stark white outline,
+  // since white is about as far from this subject's actual colours (skin,
+  // dark hair, black jacket) as a colour gets, so it needed more depth to
+  // fully disappear. If a future source video reintroduces edge fringing,
+  // raise this before reaching for anything else.
+  erodePx = 3,
   backgroundTolerance = 0.055,
   // Higher than the portrait-era default of 0.3. This clip's backdrop is not
   // evenly lit: a region can sit far enough from the single top-strip
@@ -339,7 +357,7 @@ export async function bakeHeroCutout({
 
   for (let f = 0; f < frameCount; f++) {
     const src = frameData[f]
-    const mask = erode(frameMasks[f], w, h)
+    const mask = erode(frameMasks[f], w, h, erodePx)
     const alpha = featherMask(mask, w, h, featherPx)
 
     const cell = cellCtx.createImageData(frameWidth, frameHeight)

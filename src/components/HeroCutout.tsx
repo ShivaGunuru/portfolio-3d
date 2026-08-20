@@ -109,5 +109,20 @@ export function HeroCutout({ data, progress, still, className }: HeroCutoutProps
     }
   }, [data, progress, still])
 
-  return <canvas ref={canvasRef} className={className} />
+  return (
+    <canvas
+      ref={canvasRef}
+      className={className}
+      // Eases the bottom edge out instead of ending on the sharp horizontal
+      // line the source video's own frame boundary cuts the subject off at.
+      // A mask, not a second baked alpha ramp: it composes with whatever
+      // alpha the sprite already has (background pixels stay at zero, only
+      // the subject's own bottom edge fades) rather than needing the bake
+      // to know anything about where the canvas will place the frame.
+      style={{
+        maskImage: 'linear-gradient(to bottom, black 0%, black 72%, transparent 96%)',
+        WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 72%, transparent 96%)',
+      }}
+    />
+  )
 }
