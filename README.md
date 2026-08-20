@@ -40,11 +40,24 @@ roughly 175ms/frame, far too slow for scroll-scrubbing. A plain 2D canvas steps
 to the single baked frame nearest the current scroll position as the user
 scrolls; frames are never blended, which is what avoids a double-exposure ghost
 wherever the subject's pose changed between frames and is also how real
-scroll-scrubbed video works. Background separation itself is a flood fill
-inward from the border, bounded so it can only claim backdrop-coloured pixels.
-Comparing against a reference colour, however carefully modelled, kept failing
-at the extremes of a vignette; an unbounded fill went the other way and
-hollowed the subject out through soft edges.
+scroll-scrubbed video works.
+
+Separation has two paths. The source clip is shot on a green screen, so the
+default keys it per pixel: a key green backdrop is a colour nothing on a person
+is, which means the matte needs no reference sampled from the footage and
+therefore cannot drift between frames, and alpha falls off smoothly across each
+antialiased edge instead of being a hard mask blurred back into softness. Green
+spill is neutralised so the backdrop leaves no rim behind once it is gone.
+
+For footage without a green backdrop there is a fallback: a flood fill inward
+from the border, bounded so it can only claim backdrop-coloured pixels, with one
+backdrop reference averaged across the whole clip so a frame's exposure drift
+cannot move the threshold and make the silhouette breathe. Comparing against a
+reference colour, however carefully modelled, kept failing at the extremes of a
+vignette; an unbounded fill went the other way and hollowed the subject out
+through soft edges. Backdrop that the subject's own silhouette encloses is
+recovered by matching hue rather than colour distance, because distance alone
+cannot tell lit backdrop from skin.
 
 **About** runs a generative spherical-harmonic point field in WebGL, entirely
 computed from an equation with no source image. Every per-point transform

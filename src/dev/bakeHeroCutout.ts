@@ -2,6 +2,7 @@ import {
   computeBackdropReference,
   separateBackground,
 } from '../three/backgroundSeparation'
+import { chromaKey } from '../three/chromaKey'
 
 /**
  * Bakes a sequence of video frames into a background-removed sprite sheet
@@ -40,6 +41,22 @@ export interface CutoutBakeConfig {
   pocketBound?: number
   /** Minimum pocket size to promote, as a fraction of total frame area. */
   pocketMinAreaFraction?: number
+  /**
+   * Which matte to pull. `chroma` keys a green backdrop per pixel and is the
+   * right choice whenever the footage has one: it needs no reference sampled
+   * from the footage, so nothing can drift between frames, and it yields a
+   * genuinely soft edge rather than a blurred hard mask. `floodfill` handles
+   * an ordinary studio backdrop whose colour overlaps the subject's, which is
+   * a strictly harder problem and carries all the guards documented in
+   * `backgroundSeparation.ts`.
+   */
+  matte?: 'chroma' | 'floodfill'
+  /** Chroma key: greenness at or below which a pixel is fully subject. */
+  keyLow?: number
+  /** Chroma key: greenness at or above which a pixel is fully backdrop. */
+  keyHigh?: number
+  /** Chroma key: how completely to neutralise green spill, 0..1. */
+  despill?: number
   onProgress?: (frameIndex: number, total: number) => void
 }
 
@@ -256,6 +273,14 @@ export async function bakeHeroCutout({
   // holes in the hair. If specks ever need attacking, do it with something
   // that can tell a highlight from a gap, not by relaxing this.
   pocketMinAreaFraction = 0.001,
+  matte = 'chroma',
+  // Measured on this project's green clip: backdrop greenness 0.992, every
+  // sampled subject region at or below 0.04, and almost no pixel mass between
+  // 0.05 and 0.25. These sit inside that gap with room at both ends, so they
+  // are not knife-edge.
+  keyLow = 0.08,
+  keyHigh = 0.32,
+  despill = 1,
   onProgress,
 }: CutoutBakeConfig): Promise<BakedCutout> {
   if (frameUrls.length === 0) throw new Error('bakeHeroCutout: no frames given')
@@ -274,6 +299,37 @@ export async function bakeHeroCutout({
   const frameCount = frameUrls.length
   const frameData: ImageData[] = new Array(frameCount)
   const frameMasks: Uint8Array[] = new Array(frameCount)
+  /** Only populated on the chroma path, where alpha is a first-class output
+   *  rather than something derived from a binary mask afterwards. */
+  const frameAlphas: (Float32Array | null)[] = new Array(frameCount).fill(null)
+
+  if (matte === 'chroma') {
+    for (let f = 0; f < frameCount; f++) {
+      const img = f === 0 ? first : await loadImage(frameUrls[f])
+      workCtx.clearRect(0, 0, w, h)
+      workCtx.drawImage(img, 0, 0, w, h)
+      const data = workCtx.getImageData(0, 0, w, h)
+      frameData[f] = data
+
+      // Keys and despills in one pass; `data` is mutated in place.
+      const { alpha } = chromaKey(data.data, w, h, { keyLow, keyHigh, despill })
+
+      // A binary mask still drives the crop box and the stray-island pass,
+      // both of which are inherently yes/no questions. The soft alpha is what
+      // actually gets composited.
+      const mask = new Uint8Array(w * h)
+      for (let i = 0; i < w * h; i++) mask[i] = alpha[i] < 0.5 ? 1 : 0
+
+      const kept = keepLargestComponent(mask, w, h)
+      // Islands the largest-component pass rejected must lose their alpha
+      // too, or they would still composite despite being classified backdrop.
+      for (let i = 0; i < w * h; i++) if (kept[i]) alpha[i] = 0
+
+      frameMasks[f] = kept
+      frameAlphas[f] = alpha
+      onProgress?.(f + 1, frameCount)
+    }
+  } else {
 
   // Pass 1: decode every frame, and average their individual backdrop
   // references into one shared reference.
@@ -323,6 +379,8 @@ export async function bakeHeroCutout({
     frameMasks[f] = keepLargestComponent(rawMask, w, h)
     onProgress?.(frameCount + f + 1, frameCount * 2)
   }
+
+  } // end flood-fill path
 
   // --- union bounding box across every frame's subject pixels -------------
   // A single fixed crop window, not a per-frame one: frames must line up
@@ -403,8 +461,13 @@ export async function bakeHeroCutout({
 
   for (let f = 0; f < frameCount; f++) {
     const src = frameData[f]
-    const mask = erode(frameMasks[f], w, h, erodePx)
-    const alpha = featherMask(mask, w, h, featherPx)
+    // The chroma path already produced a true soft matte from the greenness
+    // falloff across each edge. Eroding and blurring it would only throw that
+    // away and re-approximate it, so those steps belong to the flood-fill
+    // path, which starts from a hard mask and has no better option.
+    const keyed = frameAlphas[f]
+    const alpha =
+      keyed ?? featherMask(erode(frameMasks[f], w, h, erodePx), w, h, featherPx)
 
     const cell = cellCtx.createImageData(frameWidth, frameHeight)
     for (let y = 0; y < frameHeight; y++) {

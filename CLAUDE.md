@@ -68,7 +68,8 @@ Fonts are **self-hosted via `@fontsource`**, never loaded from the Google Fonts 
 
 | File | Role |
 |---|---|
-| `src/three/backgroundSeparation.ts` | Bounded flood-fill background separation. Pure function of pixel data in, mask out. Shared by the bake tool; not React/Three-specific despite living in `three/` |
+| `src/three/chromaKey.ts` | Green-screen keyer plus despill. **The path the current source video uses.** Pure per-pixel function: pixels in, soft alpha out |
+| `src/three/backgroundSeparation.ts` | Bounded flood-fill separation, for footage with an ordinary (non-green) backdrop. Pure function of pixel data in, mask out. Not React/Three-specific despite living in `three/` |
 | `src/dev/bakeHeroCutout.ts` | Dev-only, committed (not throwaway): video frames → baked cutout sprite sheet. Read it before touching the Hero visual |
 | `src/dev/bake.html` | Run this in the dev server to re-bake after the source video changes; see its own instructions |
 | `src/hooks/useHeroCutout.ts` | Loads and decodes `hero-cutout.png` + `.json`, degrades to `unavailable` on any failure |
@@ -79,6 +80,10 @@ Fonts are **self-hosted via `@fontsource`**, never loaded from the Google Fonts 
 **Frame positions in the sprite share one fixed crop window, computed as a union across every sampled frame,** the same reasoning the deleted particle bake used: frames must line up pixel-for-pixel when stepped through, or the subject would visibly jump on every frame change instead of moving the way it does in the source clip.
 
 **That union's bounding box is trimmed by mass, not raw min/max.** A single frame's stray misclassified pixel (a corner vignette a hair's-breadth outside the backdrop bound, in a frame the clip's own exposure had drifted for) otherwise dictates the crop for all 36 frames on its own. Walking each axis's per-column/row subject-pixel count until it passes a small fraction (0.03%) of the total mass finds the real edge and ignores that kind of speck, the way a percentile ignores a handful of outliers.
+
+**The current source is a green screen, and `matte: 'chroma'` is the default for that reason.** Shoot green whenever there is a choice. A key green backdrop is a colour nothing on a person is, so the matte becomes a per-pixel function with no reference sampled from the footage at all, which means there is no mechanism by which it can drift or flicker between frames, and alpha comes out genuinely soft (from the greenness falloff across an antialiased edge) rather than being a hard mask that has to be eroded and blurred back into softness. Measured on this clip: backdrop greenness 0.992 against every sampled subject region at 0.04 or below (white shirt -0.02, jacket -0.016, hair -0.075, skin -0.141, beard -0.192), with almost no pixel mass in between, so `keyLow`/`keyHigh` of 0.08/0.32 sit inside a very wide gap. Stability against the flood-fill path on comparable footage: **max frame-to-frame jump 0.351% versus 0.979%, mean pair difference 0.423% versus 1.153%.** Green spill is neutralised by clamping green to the next-highest channel (`despill`), without which the backdrop leaves a green rim on hair and shoulders once it is gone.
+
+**Everything below this point describes the `floodfill` path**, kept because it is what handles footage that does *not* have a green backdrop, and because its failure modes are expensive to rediscover.
 
 **Every frame is separated against one shared backdrop reference, averaged across the whole clip, never a per-frame one.** This is the main defence against flicker, and it is worth understanding why: with a per-frame reference, an exposure or white-balance drift between frames moves the classification threshold itself, so the silhouette breathes frame to frame even where the subject is perfectly still. The thing being measured did not change, the ruler did. Measured on this clip, frame-to-frame standard deviation of subject area: **3.443% with per-frame references, 0.869% with one shared reference**, a 4x improvement from this change alone. Residual frame-to-frame pixel churn of roughly 1.2% is genuine subject motion (sampled frames are 0.28s apart), not flicker.
 
