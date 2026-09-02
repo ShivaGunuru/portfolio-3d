@@ -19,7 +19,7 @@ export function SectionHeading({ id, label, meta }: SectionHeadingProps) {
     <div className="mb-18 flex items-baseline justify-between border-t border-edge pt-5">
       <h2
         id={id}
-        className="font-mono text-xs tracking-[0.2em] text-accent uppercase"
+        className="font-mono text-xs tracking-[0.2em] text-dim uppercase"
       >
         {label}
       </h2>
