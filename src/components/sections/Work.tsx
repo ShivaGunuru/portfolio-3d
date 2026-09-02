@@ -19,21 +19,21 @@ function ProjectCard({ project, isLast }: { project: Project; isLast: boolean })
       <Reveal className="flex flex-col gap-[18px]" stagger={0.09}>
         <h3
           id={headingId}
-          className="font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.02] font-extrabold tracking-[-0.02em]"
+          className="font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.02] font-extrabold tracking-[-0.02em] uppercase"
         >
           {project.title}
         </h3>
 
         <TypeOnScroll
           text={project.hook}
-          className="text-lg leading-snug font-light text-accent text-pretty sm:text-[19px]"
+          className="text-lg leading-snug font-light text-body text-pretty sm:text-[19px]"
         />
 
         <ul className="mt-1.5 flex flex-wrap gap-2">
           {project.tags.map((tag) => (
             <li
               key={tag}
-              className="border border-edge px-2.5 py-1.5 font-mono text-[11px] tracking-[0.1em] text-muted uppercase"
+              className="rounded-full border border-edge px-2.5 py-1.5 font-mono text-[11px] tracking-[0.1em] text-muted uppercase"
             >
               {tag}
             </li>
