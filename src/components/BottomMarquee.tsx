@@ -18,8 +18,7 @@ const RUN_TEXT = Array.from({ length: RUN_REPEATS })
   .join('')
 
 /**
- * The band that closes the page: three words drifting rightward forever,
- * glowing, with an occasional chromatic glitch.
+ * The band that closes the page: three words drifting rightward forever.
  *
  * It renders outside `<main>` on purpose. `main` carries the page's horizontal
  * padding, and this is the one element meant to run edge to edge.
@@ -44,13 +43,13 @@ export function BottomMarquee() {
             two, since it translates by half the track's width. */}
         <span
           data-text={RUN_TEXT}
-          className="marquee-run shrink-0 font-display text-[clamp(2.5rem,8vw,6rem)] leading-none font-extrabold tracking-[-0.02em] whitespace-nowrap uppercase"
+          className="shrink-0 font-display text-[clamp(2.5rem,8vw,6rem)] leading-none font-extrabold tracking-[-0.02em] whitespace-nowrap uppercase"
         >
           {RUN_TEXT}
         </span>
         <span
           data-text={RUN_TEXT}
-          className="marquee-run shrink-0 font-display text-[clamp(2.5rem,8vw,6rem)] leading-none font-extrabold tracking-[-0.02em] whitespace-nowrap uppercase"
+          className="shrink-0 font-display text-[clamp(2.5rem,8vw,6rem)] leading-none font-extrabold tracking-[-0.02em] whitespace-nowrap uppercase"
         >
           {RUN_TEXT}
         </span>
