@@ -22,7 +22,7 @@ export function Hero() {
           stagger={0.1}
           delay={0.15}
         >
-          <p className="font-mono text-xs tracking-[0.2em] text-accent uppercase">
+          <p className="font-mono text-xs tracking-[0.2em] text-dim uppercase">
             {hero.eyebrow}
           </p>
 
@@ -40,7 +40,7 @@ export function Hero() {
           <div className="mt-1.5 flex flex-wrap items-center gap-5 font-mono text-xs tracking-[0.14em] uppercase">
             <a
               href={hero.cta.href}
-              className="border border-dim px-[22px] py-[13px] transition-colors hover:border-accent hover:text-accent"
+              className="rounded-full bg-fg px-8 py-4 text-bg transition-opacity hover:opacity-80"
             >
               {hero.cta.label}
             </a>
