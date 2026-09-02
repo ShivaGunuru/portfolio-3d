@@ -55,7 +55,7 @@ export function Hero() {
 
         <HeroCutoutStage
           progress={progress}
-          className="w-full max-w-2xl justify-self-center"
+          className="w-full max-w-2xl justify-self-center bg-bg-soft"
         />
       </div>
     </section>

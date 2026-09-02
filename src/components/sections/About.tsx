@@ -67,7 +67,7 @@ export function About() {
 
         <Stage
           progress={progress}
-          className="aspect-square w-full max-w-xl justify-self-center"
+          className="aspect-square w-full max-w-xl justify-self-center bg-bg-soft"
         />
       </div>
     </section>
