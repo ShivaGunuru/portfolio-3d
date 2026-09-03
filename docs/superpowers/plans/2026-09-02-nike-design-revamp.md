@@ -1,6 +1,6 @@
 # Nike Design-Language Revamp Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Re-skin the site from its current dark violet-glow palette to a light, high-contrast, Nike-inspired visual language — white canvas, near-black ink, pill-shaped solid CTAs, flat zero-shadow cards, a single reserved accent — without touching content, copy, or interaction mechanics.
 
@@ -30,7 +30,7 @@
 
 The accent color cannot be copied verbatim from Nike's doc or from the current site: `#e8a33d` clears AA against the *old* dark background (9.12:1) but only manages ~2.15:1 against white, since flipping the background from dark to light flips which color needs to be the darker one for a fixed contrast ratio. It has been darkened to `#8b6225` — same hue (~36°), same role, recomputed to clear AA on white (5.43:1). Nike's own `stone` (#9e9ea0, ~2.7:1 on white) was considered for the `dim`/`faint` roles and rejected for the same reason: it fails AA outright. The other four grays below (`ink`, `charcoal`, `ash`, `mute`) are Nike's own values, verified to already clear AA on white, so they're used unmodified; `dim` has no Nike equivalent that fits the gap between `muted` and `faint`, so it's a computed midpoint.
 
-- [ ] **Step 1: Replace the `@theme` block's Surfaces, Text, Accent, and 3D token groups**
+- [x] **Step 1: Replace the `@theme` block's Surfaces, Text, Accent, and 3D token groups**
 
 Replace this (lines 18-44 of the current file):
 
@@ -101,17 +101,17 @@ with:
   --color-head-glow: #d98a2e; /* tint points take under the cursor */
 ```
 
-- [ ] **Step 2: Run the existing palette test**
+- [x] **Step 2: Run the existing palette test**
 
 Run: `npx vitest run src/__tests__/palette.test.ts`
 Expected: PASS, all cases — every text token clears 4.5:1, the ladder is strictly ascending, `head-fg`/`head-glow` are present.
 
-- [ ] **Step 3: Typecheck and confirm nothing else referenced the removed `--color-bg-glow` Tailwind utility**
+- [x] **Step 3: Typecheck and confirm nothing else referenced the removed `--color-bg-glow` Tailwind utility**
 
 Run: `npx tsc -b --noEmit`
 Expected: PASS. (This step only catches TypeScript errors; `--color-bg-glow`'s one consumer is a Tailwind arbitrary-value string in `App.tsx`, which Task 2 removes next. It is not a compile error today — an unresolved CSS custom property falls back to nothing, not a build failure — but leaving it in place even briefly is why Task 2 comes immediately after this one.)
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/index.css
@@ -130,7 +130,7 @@ git commit -m "style: rework color tokens for the Nike-inspired light palette"
 
 Nike's system has no decorative gradients; this is the last consumer of `--color-bg-glow`, now removed from the token set.
 
-- [ ] **Step 1: Delete the gradient div and its comment**
+- [x] **Step 1: Delete the gradient div and its comment**
 
 Remove these lines from `src/App.tsx` (currently lines 23-27):
 
@@ -153,17 +153,17 @@ The file's return block should read, immediately after `<SiteHeader />`:
       <main id="main" className="relative px-6 sm:px-gutter">
 ```
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 Run: `npx tsc -b --noEmit`
 Expected: PASS
 
-- [ ] **Step 3: Build**
+- [x] **Step 3: Build**
 
 Run: `npm run build`
 Expected: succeeds, no reference-to-undefined-variable warnings for `--color-bg-glow` anywhere in the build output.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/App.tsx
@@ -182,7 +182,7 @@ git commit -m "style: remove the violet radial-gradient background layer"
 - Consumes: nothing new.
 - Produces: `.marquee-track` (kept, unchanged) is the only CSS class this component's motion still depends on.
 
-- [ ] **Step 1: Replace the Bottom marquee CSS block**
+- [x] **Step 1: Replace the Bottom marquee CSS block**
 
 Replace the whole comment-and-rules block from `/* -----... Bottom marquee. ... ----- */` through the end of `@keyframes marquee-glitch-cool { ... }` (lines 109-259 of the current file) with:
 
@@ -220,7 +220,7 @@ Replace the whole comment-and-rules block from `/* -----... Bottom marquee. ... 
 }
 ```
 
-- [ ] **Step 2: Drop the now-unused `marquee-run` class from the component, and update its doc comment**
+- [x] **Step 2: Drop the now-unused `marquee-run` class from the component, and update its doc comment**
 
 In `src/components/BottomMarquee.tsx`, change the JSDoc comment above `export function BottomMarquee()` from:
 
@@ -247,12 +247,12 @@ Then change both occurrences of the span className (currently `"marquee-run shri
 
 (There are two identical spans; change both.)
 
-- [ ] **Step 3: Typecheck and build**
+- [x] **Step 3: Typecheck and build**
 
 Run: `npx tsc -b --noEmit && npm run build`
 Expected: both succeed.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/index.css src/components/BottomMarquee.tsx
@@ -269,7 +269,7 @@ git commit -m "style: drop the marquee's chromatic glitch, keep the plain scroll
 **Interfaces:**
 - Consumes: `--color-fg`, `--color-bg`, `--color-dim` from Task 1.
 
-- [ ] **Step 1: Move the eyebrow from accent to the neutral `dim` role**
+- [x] **Step 1: Move the eyebrow from accent to the neutral `dim` role**
 
 Change:
 
@@ -289,7 +289,7 @@ to:
 
 This is the first of three eyebrow-color changes in this plan (`SectionHeading` is Task 5); together they move every section label off the reserved accent color, per the design spec's "accent is signal, not decoration" rule.
 
-- [ ] **Step 2: Replace the outlined CTA with a solid ink pill**
+- [x] **Step 2: Replace the outlined CTA with a solid ink pill**
 
 Change:
 
@@ -315,12 +315,12 @@ to:
 
 `px-8 py-4` is Tailwind's 32px/16px, matching Nike's `button-primary` padding exactly. `text-bg` reads as "white text" now that `--color-bg` is white, the same way it always read as "the page's own background color" — no new token needed for an inverse-text role.
 
-- [ ] **Step 3: Typecheck and build**
+- [x] **Step 3: Typecheck and build**
 
 Run: `npx tsc -b --noEmit && npm run build`
 Expected: both succeed.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/sections/Hero.tsx
@@ -338,7 +338,7 @@ git commit -m "style: restyle the Hero CTA as a solid pill, move the eyebrow off
 - Consumes: `--color-dim` from Task 1.
 - Produces: recolored eyebrow used by Work, About, and Contact's section headers (`Work.tsx`, `About.tsx`, `Contact.tsx` all render `<SectionHeading>` with no other markup of their own for this element, so this one change covers all three sections).
 
-- [ ] **Step 1: Change the label's color**
+- [x] **Step 1: Change the label's color**
 
 Change:
 
@@ -358,12 +358,12 @@ to:
       >
 ```
 
-- [ ] **Step 2: Typecheck and build**
+- [x] **Step 2: Typecheck and build**
 
 Run: `npx tsc -b --noEmit && npm run build`
 Expected: both succeed.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/SectionHeading.tsx
@@ -382,7 +382,7 @@ git commit -m "style: move the WORK/ABOUT/CONTACT eyebrow labels off accent"
 
 Project titles are short noun-phrase labels ("AI Farmer Helpline"), exactly what Nike's big/bold/uppercase display tier is for — unlike the Hero H1, which is a full sentence and stays as-is per the design spec. The hook line currently sits on the reserved accent color; under the "accent is signal, not decoration" rule established in Tasks 4-5, it moves to the neutral body color. Tags move from bordered rectangles to pill chips.
 
-- [ ] **Step 1: Uppercase the project title**
+- [x] **Step 1: Uppercase the project title**
 
 Change:
 
@@ -402,7 +402,7 @@ to:
         >
 ```
 
-- [ ] **Step 2: Move the hook line off accent, onto body**
+- [x] **Step 2: Move the hook line off accent, onto body**
 
 Change:
 
@@ -422,7 +422,7 @@ to:
         />
 ```
 
-- [ ] **Step 3: Make the tag chips pill-shaped**
+- [x] **Step 3: Make the tag chips pill-shaped**
 
 Change:
 
@@ -442,12 +442,12 @@ to:
             >
 ```
 
-- [ ] **Step 4: Typecheck and build**
+- [x] **Step 4: Typecheck and build**
 
 Run: `npx tsc -b --noEmit && npm run build`
 Expected: both succeed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/sections/Work.tsx
@@ -467,7 +467,7 @@ git commit -m "style: uppercase project titles, move the hook off accent, pill-s
 
 Nike's rule: "Stage every product photograph on soft-cloud — the gray is the system's studio." Neither box currently sets a background, so both currently show bare white behind the subject/field. Adding the soft-cloud fill gives both the same "staged on a neutral backdrop" read Nike uses for all of its photography. Neither box has a border-radius today (Tailwind's default is none unless set), so this already satisfies Nike's zero-radius container rule with no extra class needed.
 
-- [ ] **Step 1: Add the backdrop to the Hero cutout box**
+- [x] **Step 1: Add the backdrop to the Hero cutout box**
 
 Change:
 
@@ -487,7 +487,7 @@ to:
         />
 ```
 
-- [ ] **Step 2: Add the backdrop to the About field box**
+- [x] **Step 2: Add the backdrop to the About field box**
 
 Change:
 
@@ -507,12 +507,12 @@ to:
         />
 ```
 
-- [ ] **Step 3: Typecheck and build**
+- [x] **Step 3: Typecheck and build**
 
 Run: `npx tsc -b --noEmit && npm run build`
 Expected: both succeed.
 
-- [ ] **Step 4: Visually confirm the backdrop renders where expected**
+- [x] **Step 4: Visually confirm the backdrop renders where expected**
 
 Start the dev server (`npm run dev`), open the site, and inspect both boxes:
 
@@ -522,7 +522,7 @@ npm run dev
 
 In a browser at `http://localhost:5173`, scroll to Hero and to About. Confirm both the cutout box and the 3D-field box show a light gray rectangle (not pure white, not visibly darker than the page in a way that reads as an error) behind their content, at both mobile (<768px, where the boxes should not render *at all* — this is the existing mobile-hide rule, unaffected by this task) and desktop widths.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/sections/Hero.tsx src/components/sections/About.tsx
@@ -541,7 +541,23 @@ git commit -m "style: stage the Hero cutout and About field on a soft-cloud back
 
 Task 1 set `--color-head-fg: #1a1a1a` and `--color-head-glow: #d98a2e` as a reasoned starting point (dark points against the light background, mirroring the site's own ink/accent relationship), not a verified final answer — additive-blend glow behaves very differently composited over white than over near-black, and this needs to be confirmed by rendering, the same way this project's Hero field brightness and hover-glow were tuned earlier by rendering and measuring rather than by picking numbers upfront.
 
-- [ ] **Step 1: Start the dev server and open the About section**
+> **Execution note (deviation from this task's stated file list).** The premise
+> above was wrong in a way the rendering exposed: the field's appearance was not
+> a function of its colours at all. The material blended additively, and additive
+> blending can only add light to the framebuffer, so against the soft-cloud
+> backdrop it was a no-op. Rendered with pure black points at three sizes, 0% of
+> pixels were distinguishable from the background. No value of either token could
+> have fixed that.
+>
+> With the user's approval, this task therefore changed component code as well:
+> `HarmonicField.tsx` switched to `NormalBlending`, and three constants that had
+> been tuned for accumulating light followed it (the near-cursor size boost, the
+> colour overdrive, and `uPush`, which hollowed the hover into a ring). See the
+> commit for the reasoning on each. Both colour tokens were measured against
+> alternatives and left exactly as Task 1 set them, so `src/index.css` is
+> unchanged by this task.
+
+- [x] **Step 1: Start the dev server and open the About section**
 
 ```bash
 npm run dev
@@ -549,7 +565,7 @@ npm run dev
 
 Open `http://localhost:5173` in a browser, scroll to the About section, and let the pinned scroll animation settle so the field is fully visible.
 
-- [ ] **Step 2: Check baseline legibility**
+- [x] **Step 2: Check baseline legibility**
 
 At rest (no cursor over the field), confirm:
 - The point cloud is clearly visible against the `--color-bg-soft` backdrop from Task 7 — not so dark it looks like a solid black blob with no internal structure, not so light it disappears into the backdrop.
@@ -557,17 +573,17 @@ At rest (no cursor over the field), confirm:
 
 If the resting point color is too flat or too dark to show structure, lighten `--color-head-fg` toward a dark warm gray (for example `#2a2622`) rather than pure near-black, and re-check.
 
-- [ ] **Step 3: Check the hover glow**
+- [x] **Step 3: Check the hover glow**
 
 Hover over several different areas of the field and confirm the glow color (`--color-head-glow`) reads as a distinct warm highlight against both the point color and the soft-cloud backdrop — not so pale it blends into the backdrop, not so saturated it clips to solid white in the brightened area.
 
 If the glow washes out against the light backdrop, deepen `--color-head-glow` toward a more saturated/darker amber (for example `#b8681c`) and re-check. If it reads muddy or barely different from the resting point color, brighten or increase saturation instead.
 
-- [ ] **Step 4: Confirm reduced motion still holds the field still**
+- [x] **Step 4: Confirm reduced motion still holds the field still**
 
 With the OS-level "reduce motion" setting enabled, reload the page and scroll to About. Confirm the field renders a single static frame with no rotation or breathing motion (existing behavior, driven by `usePrefersReducedMotion`, not touched by this task — this step is verifying the color change didn't accidentally disturb it, not testing new logic).
 
-- [ ] **Step 5: Record the final values and re-run the palette test**
+- [x] **Step 5: Record the final values and re-run the palette test**
 
 Whatever values Steps 2-3 converged on, confirm they're what's currently in `src/index.css`, then run:
 
@@ -577,7 +593,7 @@ npx vitest run src/__tests__/palette.test.ts
 
 Expected: PASS (this test only checks that `head-fg`/`head-glow` exist as valid hex values, not their contrast — any reasonable color chosen in Steps 2-3 will pass).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/index.css
@@ -596,7 +612,7 @@ git commit -m "style: tune the About field's colors against the light background
 **Interfaces:**
 - Consumes: everything produced by Tasks 1-8.
 
-- [ ] **Step 1: Full test suite**
+- [x] **Step 1: Full test suite**
 
 ```bash
 npx vitest run
@@ -604,7 +620,7 @@ npx vitest run
 
 Expected: all suites pass, including `palette.test.ts`, `content.test.ts`, and `reducedMotion.test.ts`.
 
-- [ ] **Step 2: Typecheck and production build**
+- [x] **Step 2: Typecheck and production build**
 
 ```bash
 npx tsc -b --noEmit
@@ -613,7 +629,7 @@ npm run build
 
 Expected: both succeed with no new warnings.
 
-- [ ] **Step 3: Visual pass at desktop width**
+- [x] **Step 3: Visual pass at desktop width**
 
 ```bash
 npm run dev
@@ -627,21 +643,21 @@ Open `http://localhost:5173` and check, section by section:
 - Contact: unchanged structurally, recolored.
 - Bottom marquee: scrolls plainly, with no RGB-split flicker at any point in a 30-second observation window.
 
-- [ ] **Step 4: Visual pass at mobile width (<768px)**
+- [x] **Step 4: Visual pass at mobile width (<768px)**
 
 Resize the browser (or use device emulation) to under 768px. Confirm:
 - Neither the Hero cutout nor the About field renders at all (existing mobile-hide rule).
 - No layout shift or leftover reserved space where they would have been.
 - All text remains legible against the light background at this width.
 
-- [ ] **Step 5: Reduced-motion pass**
+- [x] **Step 5: Reduced-motion pass**
 
 With the OS-level "reduce motion" setting enabled, reload and scroll through the whole page. Confirm: no scroll-pin animation plays (both stages hold a still frame), the marquee track doesn't drift, and all copy is fully visible (not stuck mid-reveal) — this is all pre-existing behavior this plan didn't touch, being reconfirmed rather than re-implemented.
 
-- [ ] **Step 6: Fix forward if anything in Steps 3-5 looks wrong**
+- [x] **Step 6: Fix forward if anything in Steps 3-5 looks wrong**
 
 If a problem surfaces, fix it in the relevant file from the task list above and re-run the specific check that caught it, rather than batching fixes to the end. Commit each fix separately with a message describing what was wrong (for example `fix: About field points too dark to read against soft-cloud backdrop`).
 
-- [ ] **Step 7: Final commit**
+- [x] **Step 7: Final commit**
 
 If Steps 1-5 required no fixes, there's nothing new to commit — this task's value is the verification record, not new code. If Step 6 produced fixes, they're already committed individually; no separate wrap-up commit is needed.
