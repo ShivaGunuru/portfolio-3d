@@ -103,7 +103,13 @@ export const harmonicVertexShader = /* glsl */ `
 
     gl_Position = projectionMatrix * viewPos;
 
-    float size = uSize * (0.7 + 0.6 * shade) * (1.0 + influence * 2.4);
+    // The near-cursor size boost is small on purpose. At the 2.4 it carried
+    // under additive blending, hovered points grew enough to overlap solidly,
+    // and source-alpha blending turns overlap into flat coverage rather than
+    // into brighter light: the highlight rendered as a hard-edged disc with no
+    // visible points in it. Measured against the alternatives, 0.8 is the point
+    // where the highlight still reads as an emphasised part of the cloud.
+    float size = uSize * (0.7 + 0.6 * shade) * (1.0 + influence * 0.8);
     gl_PointSize = size * (uScale / max(-viewPos.z, 0.0001));
   }
 `
@@ -111,9 +117,15 @@ export const harmonicVertexShader = /* glsl */ `
 /**
  * Fragment shader.
  *
- * Same treatment as the portrait: a soft radial falloff so additively blended
- * points accumulate into light rather than tiling into squares, with the
- * colour pushed toward the glow tint and over-driven near the cursor.
+ * A soft radial falloff so overlapping points accumulate into a cloud rather
+ * than tiling into visible squares, with the colour pushed toward the glow
+ * tint near the cursor.
+ *
+ * The falloff is the only part of this that survives unchanged from the
+ * additive-blending era. See `HarmonicField.tsx` for why the material now
+ * blends normally; the consequence here is that near-cursor emphasis has to be
+ * carried by alpha rather than by over-driving the colour past 1.0, which used
+ * to accumulate as light and now merely clips to white.
  */
 export const harmonicFragmentShader = /* glsl */ `
   uniform float uOpacity;
@@ -130,10 +142,15 @@ export const harmonicFragmentShader = /* glsl */ `
 
     float falloff = smoothstep(0.5, 0.0, dist);
 
-    vec3 color = mix(vColor, uGlowColor, vGlow * 0.75);
-    color *= 1.0 + vGlow * 2.0;
+    // Tint the whole way to the glow colour under the cursor, since tint is now
+    // the only thing carrying the highlight's hue.
+    vec3 color = mix(vColor, uGlowColor, vGlow * 0.9);
 
-    gl_FragColor = vec4(color, falloff * uOpacity * vTone);
+    // Emphasis by presence rather than by brightness: hovered points sit more
+    // solidly against the backdrop instead of washing toward white.
+    float alpha = falloff * uOpacity * vTone * (1.0 + vGlow * 0.35);
+
+    gl_FragColor = vec4(color, clamp(alpha, 0.0, 1.0));
 
     #include <colorspace_fragment>
   }

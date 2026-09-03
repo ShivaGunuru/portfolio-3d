@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, type RefObject } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import {
-  AdditiveBlending,
   Color,
+  NormalBlending,
   type Group,
   type Points,
   type ShaderMaterial,
@@ -86,7 +86,15 @@ export function HarmonicField({
       uSize: { value: 0.05 },
       uScale: { value: 400 },
       uRadius: { value: 0.34 },
-      uPush: { value: 0.6 },
+      // Zero, for the same reason the Hero head's push ended up at zero: the
+      // displacement is radially outward from the cursor, so any positive value
+      // evacuates the middle of the influence circle and the hover reads as a
+      // ring with a hole rather than as a highlight. That was survivable while
+      // the field glowed on a near-black page, where the hole was just more
+      // background. On the light page the hole is a stark white disc ringed in
+      // amber. The cursor now tints and emphasises points where they are,
+      // instead of pushing them aside.
+      uPush: { value: 0 },
       uOpacity: { value: 1 },
       uGlowColor: { value: [glow.r, glow.g, glow.b] as [number, number, number] },
     }
@@ -166,7 +174,17 @@ export function HarmonicField({
           fragmentShader={harmonicFragmentShader}
           transparent
           depthWrite={false}
-          blending={AdditiveBlending}
+          // Normal, not additive. Additive blending can only ever add light to
+          // what is already in the buffer, so against this section's near-white
+          // backdrop it is a no-op: rendered with pure black points it measured
+          // 0% of pixels distinguishable from the background at every point
+          // size tried. It was the right choice while the page was near-black,
+          // where accumulating points read as a glowing cloud. On a light page
+          // the points have to darken the buffer instead, which only source-
+          // alpha blending can do. depthWrite stays off either way: the cloud
+          // is unsorted, and writing depth would make points cull each other in
+          // buffer order rather than by what is actually in front.
+          blending={NormalBlending}
         />
       </points>
     </group>
