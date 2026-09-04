@@ -156,7 +156,19 @@ Same lesson as the aspect ratio above: **anything that depends on the crop must 
 
 Files: `harmonicGeometry.ts` (seeds, parameter sets, fit scale), `harmonicShaders.ts`, `HarmonicField.tsx`, rendered through `src/three/Stage.tsx` → `HeadStage.tsx`, which now only ever mounts this one scene.
 
-**The harmonic form is solved per frame, never stored.** Each point knows only its angle on a Fibonacci-lattice sphere; position comes from `r = sin(m0 phi)^m1 + cos(m2 phi)^m3 + sin(m4 theta)^m5 + cos(m6 theta)^m7`, and scroll interpolates the eight exponents between two sets. **Exponents near 1 make it a fuzzy ball** (the first attempt filled the entire frame as noise); high exponents are what carve distinct lobes. `harmonicFitScale()` samples across the morph rather than just the endpoints, because the midpoint can be wider than either end. Verified: zero frame-edge contact at morph 0, 0.5 and 1.
+**The harmonic form is solved per frame, never stored.** Each point knows only its angle on a Fibonacci-lattice sphere; position comes from `r = sin(m0 phi)^m1 + cos(m2 phi)^m3 + sin(m4 theta)^m5 + cos(m6 theta)^m7`, and scroll interpolates the eight numbers between two sets. A is a sphere, B is a four-pointed star, so the scroll reads as a system resolving out of a ball into structure.
+
+**Exponents are the load-bearing part, and there is a window.** Near 1 the four terms sum into a fuzzy ball that fills the frame as noise. At 6, which an earlier revision used almost throughout, the lobes are carved so hard that equal-area sphere sampling stretches them into thin radiating sprays: the field read as a firework, and that was most of why it looked amateurish. 2 to 4 keeps the surface closed and legible. **If this field ever looks like a splatter again, look at the exponents before anything else.**
+
+**Scale is fitted per morph, from a precomputed table.** `buildMorphFitTable` builds 17 fit scales at mount and `sampleMorphFit` interpolates between them each frame. One scale spanning the whole morph renders the smaller-radius endpoint smaller, so the form swells as it reorganises rather than just changing shape. Fitting per frame is not available: one fit costs 2.37ms against a 16.7ms budget. Use `harmonicFitScaleAt`, not `harmonicFitScale`, for a single shape: the latter walks five morph steps and, handed one set twice, scans the same shape six times. Verified: zero frame-edge contact across the morph, and both endpoints fit to the same on-screen size.
+
+**Every point is one colour, and that is deliberate.** An earlier revision recoloured 14% of points to the accent so the highlight would "read as sparkle through the volume". That worked on a near-black page. On white, randomly placed coloured specks read as dirt, and this is the single change that most made the field look unfinished. Emphasis is the cursor's job. `src/__tests__/harmonicGeometry.test.ts` guards it.
+
+**Depth is cued by alpha, not by perspective.** The camera sits at z 7.3 and the form is fitted to radius 1.55, so perspective varies point size by roughly 25% across the depth range, which reads as nothing. A `vDepth` varying fades the far side toward the page instead, and it is the difference between 42,000 dots as a flat speckle field and as a volume.
+
+**Points on the radius floor are faded out.** `harmonicRadius` floors at 0.12, and every angle where all four terms cancel lands there, piling a dark knot at the origin. `smoothstep(0.13, 0.45, r)` on `vTone` removes it. They carry no shape information, so nothing is lost.
+
+**The field sits on the page, with no backdrop.** `About.tsx` deliberately carries no `bg-bg-soft`: a soft-cloud rectangle puts a hard edge around a form that is supposed to be points in space. `--color-bg-soft` currently has no consumer in `src/` at all.
 
 `harmonicGeometry.ts` and `HarmonicField.tsx` differ only in casing from each other's original names; the data module was renamed for exactly that reason, since a case-insensitive filesystem collides on it.
 
