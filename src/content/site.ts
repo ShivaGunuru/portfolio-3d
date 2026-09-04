@@ -73,23 +73,27 @@ export const work = {
 
 export const projects: readonly Project[] = [
   {
-    id: 'ai-farmer-helpline',
-    title: 'AI Farmer Helpline',
-    hook: 'A single phone call away from verified agricultural advice. No wait times, no guesswork.',
-    tags: ['Python', 'faster-whisper', 'ChromaDB', 'Twilio', 'LLM + TTS'],
-    status: { kind: 'note', label: 'In progress, repo not yet public' },
+    id: 'ai-voice-agent-for-farmers',
+    title: 'AI Voice Agent for Farmers',
+    hook: 'A crop question in Telugu, answered from a cited agronomy page, or not answered at all.',
+    tags: ['Python', 'IndicConformer ONNX', 'BGE-M3', 'FAISS', 'Gemma 3'],
+    status: {
+      kind: 'repo',
+      href: 'https://github.com/ShivaGunuru/ai-voice-agent-for-farmers',
+      label: 'github.com/ShivaGunuru/ai-voice-agent-for-farmers',
+    },
     details: [
       {
         label: 'Problem',
-        body: "Farmers rely on informal sources for crop guidance: local contacts, unlicensed advisors. It's inconsistent, and sometimes closer to superstition than fact. Verified information isn't a phone call away.",
+        body: 'Ask a general-purpose model why the rice is yellowing and it answers confidently, often wrongly. For a smallholder farmer about to act on that answer, a fluent guess at a crop disease is worse than no answer at all.',
       },
       {
         label: 'Approach',
-        body: "One inbound call replaces finding the right expert. The caller speaks their regional language; the query is transcribed, answered by retrieval over verified agricultural documents rather than an LLM's unverified memory, and read back as speech.",
+        body: 'The farmer speaks Telugu. A voice-activity detector and an ONNX IndicConformer model transcribe it, BGE-M3 retrieval runs over 1,716 pages of government agronomy literature, and a deterministic reranker scores each passage on whether it names the symptom, plant part and growth stage described, not just whether it looks similar.',
       },
       {
         label: 'Where it stands',
-        body: 'Audio preprocessing and speech-to-text built and validated end to end on recorded clips: reliable RMS-based silence detection, frame-by-frame transcription. Retrieval, generation and the live voice loop are the active phase.',
+        body: 'Speech, retrieval and ranking are built and measured end to end against a frozen 100-query benchmark with page-level gold citations: 40.2% top-1 diagnosis, 90.8% retrieval recall. An experimental verifier that can only withdraw a diagnosis, never invent one, reached 47.8%, but on a single judge model, so it stays out of production. Text-to-speech is not built yet.',
       },
     ],
   },
@@ -176,7 +180,7 @@ export const about = {
   /** Rendered large, as a display pull-quote. Its length is load-bearing. */
   lead: 'I moved from backend into AI because I wanted to build with it directly, not just use it as a chat interface.',
   body: [
-    'That shift is where most of my recent work lives: retrieval-augmented systems, like a voice tool that gives farmers a verified, single-call alternative to unreliable local advice.',
+    "That shift is where most of my recent work lives: retrieval-augmented systems, like a voice tool that answers a farmer's spoken crop question from cited agronomy documents instead of from a model's memory.",
     "Before AI, I co-ran a video production studio through college, doing motion graphics and content, short and long form, for clients including a millet-snack food brand and a Dubai-based SaaS company. That background isn't unrelated to the engineering. It's why I don't just ship technically sound systems; I think about how to explain what they do to someone who isn't technical. It's also why I still make AI and tech content today, as @mr.owerthinker.",
     "Backend gave me the foundation. AI is what I'm building with now. Video and content gave me the ability to make technical work legible. That combination, not a lack of focus, is the actual advantage.",
   ],

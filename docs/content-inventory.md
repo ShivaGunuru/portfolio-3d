@@ -24,15 +24,27 @@ Backend-trained, RAG-focused — with a communication edge from years creating c
 
 ## Projects
 
-### 1. AI Farmer Helpline
-**Hook:** A single phone call away from verified agricultural advice — no wait times, no guesswork.
+### 1. AI Voice Agent for Farmers
 
-- **Problem:** Farmers often rely on informal sources — local contacts, unlicensed advisors — for crop guidance, which can be inconsistent or influenced by superstition rather than fact. Verified agricultural information isn't always a phone call away.
-- **Approach:** A single inbound call replaces the need to track down the right expert. The caller speaks in their regional language; the query is transcribed, answered using retrieval over verified agricultural documents (not an LLM's unverified memory), and the answer is read back as speech.
-- **Stack:** Python (custom audio pipeline — PCM parsing, RMS-based silence detection, frame segmentation), faster-whisper (speech-to-text), ChromaDB (retrieval, planned), Twilio (telephony, planned), LLM + TTS (evaluation in progress)
-- **Measurable result:** Audio preprocessing and STT pipeline built and validated end-to-end on recorded clips — reliable silence detection and frame-by-frame transcription. Retrieval, generation, and the live voice-response loop are the active next phase.
-- **Live demo:** None yet (in progress)
-- **Repo:** None yet — code not public.
+> Updated 2026-09-04 from the now-public repo, which had moved well past this
+> entry. The project was previously described here as "AI Farmer Helpline", an
+> inbound-telephony product built on faster-whisper, ChromaDB and Twilio. None
+> of those are in the built system: there is no telephony layer, speech-to-text
+> is an ONNX IndicConformer model rather than Whisper, and retrieval is BGE-M3
+> over a FAISS index. Text-to-speech is still unbuilt, so the "read back as
+> speech" claim was describing an intention, not a feature. The facts below
+> come from the repository README and its tracked evaluation artifacts.
+
+**Hook:** A crop question in Telugu, answered from a cited agronomy page, or not answered at all.
+
+- **Problem:** A general-purpose model asked why the rice is yellowing answers confidently and often wrongly. For a smallholder farmer about to act on the answer, a fluent guess at a crop disease is worse than no answer at all.
+- **Approach:** Voice-first and multilingual. The farmer speaks Telugu; a custom energy-based voice-activity detector and a streaming ONNX IndicConformer model transcribe it. Dense BGE-M3 retrieval runs over a curated corpus of 10 government and institutional PDFs (ANGRAU, NIPHM, ICAR), 1,716 pages covering rice, cotton and chilli. A deterministic, evidence-aware reranker then scores each candidate on whether the passage actually names the symptom, plant part and growth stage the farmer described, rather than on similarity alone. Every boost is traceable to the matched symptom, locator and evidence level.
+- **Stack:** Python, ONNX IndicConformer (`sulabhkatiyar/indicconformer-120m-onnx`) for Telugu streaming ASR, custom VAD, `BAAI/bge-m3` embeddings, FAISS, quantized Gemma 3 4B served from Colab as the experimental verifier.
+- **Measurable result:** Evaluated against a frozen, hand-built 100-query benchmark with page-level gold citations (147/147 references string-verified at build time), spanning 3 crops, 3 languages and 24 diagnoses. Production baseline, deterministic reranker only: 40.2% diagnosis top-1, 62.0% diagnosis complete, 90.8% Candidate-50 retrieval recall, 71.0% wrong-boost rate, 34/100 PASS.
+- **Experimental, not production:** A withdrawal-only LLM evidence verifier (configuration "C3", aggregating verdicts per diagnosis rather than per chunk) measured 47.8% top-1, 52.0% wrong-boost and 45/100 PASS. It can remove a diagnosis but never invent one. **It has been confirmed with one judge model only**; two independent cross-model runs were attempted and neither completed. It is not wired into production.
+- **Not built yet:** Text-to-speech, which is what would close the voice-in, voice-out loop. Answer generation is prototyped but not benchmarked.
+- **Live demo:** None.
+- **Repo:** https://github.com/ShivaGunuru/ai-voice-agent-for-farmers (public)
 
 ---
 
@@ -74,7 +86,7 @@ Backend-trained, RAG-focused — with a communication edge from years creating c
 
 ## About
 
-I started in backend engineering and moved into AI because I wanted to build with it directly, not just use it as a chat interface. That shift is where most of my recent work lives — right now, that means retrieval-augmented systems, like a voice-based tool that gives farmers a verified, single-call alternative to informal or unreliable local advice.
+I started in backend engineering and moved into AI because I wanted to build with it directly, not just use it as a chat interface. That shift is where most of my recent work lives — right now, that means retrieval-augmented systems, like a voice-based tool that answers a farmer's spoken crop question from cited agronomy documents instead of from a model's memory.
 
 Before AI, I co-ran a video production studio through college — motion graphics and content creation, both short-form and long-form, for clients including a millet-snack food brand and, a few years back, a Dubai-based SaaS company on a freelance basis. That background isn't unrelated to the engineering work; it's why I don't just ship technically sound systems, I think about how to communicate what they do and why they matter to someone who isn't technical. It's also why I still create AI/tech content today (@mr.owerthinker) — the same audience-communication instinct, aimed at explaining ideas rather than just building them.
 
