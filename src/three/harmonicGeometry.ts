@@ -13,34 +13,25 @@ export interface HarmonicPointData {
 /**
  * The two spherical-harmonic parameter sets the field morphs between.
  *
- * Each is eight exponents driving the classic
- * `r = sin(m0 phi)^m1 + cos(m2 phi)^m3 + sin(m4 theta)^m5 + cos(m6 theta)^m7`.
- * Small integer changes swing the form wildly, which is the point: the whole
- * shape is four numbers per axis, and scroll interpolates between two sets of
- * them rather than playing back a baked animation.
+ * Each is eight numbers driving the classic
+ * `r = sin(m0 phi)^m1 + cos(m2 phi)^m3 + sin(m4 theta)^m5 + cos(m6 theta)^m7`,
+ * where the even indices are frequencies and the odd ones are exponents.
  *
- * These particular values were chosen by rendering candidates and comparing
- * them, not picked off a list. The first is open and lobed so it reads as a
- * form rather than a ball; the second is denser and more folded, so the morph
- * has somewhere to travel.
+ * A is a sphere and B is a four-pointed star, so scroll reads as a system
+ * resolving out of an undifferentiated ball into structure. Rendered at morph
+ * 0, 0.25, 0.5, 0.75 and 1, the sequence runs sphere, rounded cube,
+ * four-petal, cross, star, and every step in it has a closed silhouette.
+ *
+ * The exponents are the load-bearing part, and they are deliberately low.
+ * An earlier pair used 6 almost throughout on the theory that high exponents
+ * carve distinct lobes, which they do. What that missed is what happens when
+ * hard lobes meet equal-area sphere sampling: the lobes stretch into thin
+ * radiating sprays of scattered points, and the result reads as a firework
+ * rather than an object. That is most of why this field looked amateurish.
+ * Values in the 2 to 4 range keep the surface closed and legible.
  */
-export const HARMONIC_A = [2, 6, 3, 6, 5, 6, 2, 6] as const
-export const HARMONIC_B = [8, 6, 2, 3, 4, 6, 1, 1] as const
-
-/**
- * The exponents matter more than the frequencies.
- *
- * Values near 1 make every term a broad lobe, and the four terms sum into
- * something close to a sphere: the first pass at this rendered as a fuzzy ball
- * filling the whole frame. High exponents push `pow(abs(sin(x)), m)` toward
- * zero everywhere except near the peaks, which is what carves the surface into
- * distinct lobes and hollows. A is compact and crystalline, B is elongated
- * with radiating arms, so the morph between them is a genuine reorganisation
- * rather than a wobble.
- *
- * Both were chosen by rendering candidates and comparing frame coverage and
- * structure, not taken from a list.
- */
+export const HARMONIC_A = [2, 2, 2, 2, 2, 2, 2, 2] as const
+export const HARMONIC_B = [2, 4, 3, 4, 2, 4, 3, 4] as const
 
 /** Evaluates the same radius the shader does, for fitting and inspection. */
 export function harmonicRadius(
@@ -105,16 +96,19 @@ export function harmonicFitScale(
 export function buildHarmonicField(
   count: number,
   baseColor: string,
-  accentColor: string,
-  accentRatio = 0.14,
 ): HarmonicPointData {
   const seeds = new Float32Array(count * 3)
   const colors = new Float32Array(count * 3)
   const randoms = new Float32Array(count * 3)
 
+  // One colour for the whole field. An earlier revision scattered accent
+  // points through the volume at a 14% ratio so the highlight would "read as
+  // sparkle through the volume". That held while the page was near-black. On
+  // white, randomly placed coloured specks read as dirt: scanner dust, or
+  // compression artifacts. Emphasis is now entirely the cursor's job, which
+  // is the difference between a highlight that means something and one that
+  // is just noise.
   const base = new Color(baseColor)
-  const accent = new Color(accentColor)
-  const tmp = new Color()
 
   const golden = Math.PI * (3 - Math.sqrt(5))
 
@@ -130,13 +124,9 @@ export function buildHarmonicField(
     seeds[i3 + 1] = phi
     seeds[i3 + 2] = Math.random()
 
-    // Accent points are scattered rather than banded, so the highlight reads
-    // as sparkle through the volume instead of a stripe across it.
-    const isAccent = Math.random() < accentRatio
-    tmp.copy(isAccent ? accent : base)
-    colors[i3] = tmp.r
-    colors[i3 + 1] = tmp.g
-    colors[i3 + 2] = tmp.b
+    colors[i3] = base.r
+    colors[i3 + 1] = base.g
+    colors[i3 + 2] = base.b
 
     randoms[i3] = Math.random() * 2 - 1
     randoms[i3 + 1] = Math.random()

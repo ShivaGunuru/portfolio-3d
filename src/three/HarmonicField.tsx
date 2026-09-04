@@ -23,7 +23,6 @@ const POINT_COUNT = 42000
 
 interface HarmonicFieldProps {
   baseColor: string
-  accentColor: string
   glowColor: string
   /** 0..1 scroll-pin progress. Drives the morph between harmonic sets. */
   progress: RefObject<number>
@@ -43,7 +42,6 @@ interface HarmonicFieldProps {
  */
 export function HarmonicField({
   baseColor,
-  accentColor,
   glowColor,
   progress,
   still,
@@ -62,8 +60,8 @@ export function HarmonicField({
   const smoothMorph = useRef(0)
 
   const data = useMemo(
-    () => buildHarmonicField(POINT_COUNT, baseColor, accentColor),
-    [baseColor, accentColor],
+    () => buildHarmonicField(POINT_COUNT, baseColor),
+    [baseColor],
   )
 
   const uniforms = useMemo(() => {

@@ -52,7 +52,6 @@ export function HeadStage({ progress, className, reducedMotion }: HeadStageProps
   // have rendered a scene from a design that no longer exists.
   const [tokens] = useState(() => ({
     base: readToken('--color-head-fg', '#1a1a1a'),
-    accent: readToken('--color-accent', '#8b6225'),
     glow: readToken('--color-head-glow', '#d98a2e'),
   }))
 
@@ -84,7 +83,6 @@ export function HeadStage({ progress, className, reducedMotion }: HeadStageProps
       >
         <HarmonicField
           baseColor={tokens.base}
-          accentColor={tokens.accent}
           glowColor={tokens.glow}
           progress={progress}
           still={reducedMotion}
