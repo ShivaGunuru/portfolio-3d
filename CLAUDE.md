@@ -47,7 +47,11 @@ grep -n "—" src/content/site.ts index.html
 
 Tailwind v4 is CSS-first, so **there is no `tailwind.config.js`**. Every token is declared in a `@theme` block in **[src/index.css](src/index.css)**, which is the only file in the project where a hex value or font name may appear. Tailwind generates utilities from each token (`--color-bg` → `bg-bg`, `text-bg`) *and* emits it as a real CSS custom property, which is how the Three.js layer reads the same values via `getComputedStyle` instead of keeping a second copy of the palette.
 
-Colors: `bg`, `bg-glow`, `fg`, `body`, `muted`, `dim`, `faint`, `accent`, `edge`, `head-fg`.
+Colors: `bg`, `bg-soft`, `fg`, `body`, `muted`, `dim`, `faint`, `accent`, `edge`, `head-fg`, `head-glow`.
+
+**The palette is light: near-black ink on white, one reserved amber accent.** It was violet-on-near-black until the Nike-inspired revamp (`docs/superpowers/plans/2026-09-02-nike-design-revamp.md`). If you find `bg-glow`, a radial-gradient background layer, or a marquee chromatic-glitch class, they are stale. `bg-soft` is the neutral "studio" backdrop the Hero cutout and the About field are staged on.
+
+**A colour that cleared AA on the old dark background will usually fail on white,** because flipping the background flips which colour of the pair has to be the darker one. The original accent `#e8a33d` measured 9.12:1 on `#0b0a14` and only ~2.15:1 on white; it is now `#8b6225`. `src/__tests__/palette.test.ts` reads `index.css` directly and enforces this, so changing a token is enough to be checked.
 Fonts: `font-display` (Syne), `font-sans` (IBM Plex Sans), `font-mono` (IBM Plex Mono).
 
 Read `src/index.css` for the values and what each is for. Note `edge` is the hairline/border token, not `border`, which would collide with Tailwind's own `border-*` utilities.
@@ -144,7 +148,13 @@ Files: `harmonicGeometry.ts` (seeds, parameter sets, fit scale), `harmonicShader
 
 **Every canvas must stay `pointer-events: none`,** including the inline `style` passed to `<Canvas>` — R3F writes `pointer-events: auto` on its own container and will otherwise swallow clicks near it. Cursor position comes from a `window` listener, so hover works without the canvas intercepting anything.
 
-**Glow is done in-shader**, via additive blending plus a radial falloff and over-driven colour near the cursor. There is no postprocessing pass and no bloom dependency.
+**Glow is done in-shader**, via a radial falloff and a colour shift toward `head-glow` near the cursor. There is no postprocessing pass and no bloom dependency.
+
+**The material blends normally, not additively, and that is not a style choice.** Additive blending only ever *adds* to the framebuffer, so on this section's near-white backdrop it is a mathematical no-op: measured, pure black points at three different sizes left 0% of pixels distinguishable from the background. It was the right mode while the page was near-black and points accumulated into light. **If this field ever looks invisible or washed out, check the blend mode before touching any colour** — no token value can compensate.
+
+**Three constants downstream of the blend equation were tuned for additive light and had to change with it.** Near-cursor emphasis now rides on alpha, because the old `color *= 1.0 + vGlow * 2.0` overdrive accumulated as glow before and merely clips to white now. The near-cursor point-size boost dropped from 2.4 to 0.8, because under alpha blending overlapping points produce flat coverage rather than brighter light, so the highlight rendered as a hard-edged disc with no points visible in it.
+
+**`uPush` is 0, for the same reason the Hero head's was.** The displacement is radially outward from the cursor, so any positive value evacuates the middle of the influence circle and the hover reads as a ring with a hole rather than as a highlight. On the old dark page that hole was just more background; on white it is a stark white disc ringed in amber. **This is the second time this shape has been rediscovered by rendering it. Do not raise `uPush` without looking at the result.**
 
 **`reducedMotion` holds a representative form rather than animating**, via the same `still` prop pattern as the Hero cutout.
 
