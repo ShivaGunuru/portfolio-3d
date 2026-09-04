@@ -13,7 +13,8 @@ import {
   HARMONIC_A,
   HARMONIC_B,
   buildHarmonicField,
-  harmonicFitScale,
+  buildMorphFitTable,
+  sampleMorphFit,
 } from './harmonicGeometry'
 import { harmonicFragmentShader, harmonicVertexShader } from './harmonicShaders'
 
@@ -64,6 +65,10 @@ export function HarmonicField({
     [baseColor],
   )
 
+  // Built once. See buildMorphFitTable: this is what keeps the form at a
+  // constant on-screen size while its shape reorganises.
+  const fitTable = useMemo(() => buildMorphFitTable(HARMONIC_A, HARMONIC_B), [])
+
   const uniforms = useMemo(() => {
     const glow = new Color(glowColor)
     return {
@@ -73,9 +78,9 @@ export function HarmonicField({
       uHarmA1: { value: HARMONIC_A.slice(4, 8) as unknown as number[] },
       uHarmB0: { value: HARMONIC_B.slice(0, 4) as unknown as number[] },
       uHarmB1: { value: HARMONIC_B.slice(4, 8) as unknown as number[] },
-      // Fitted rather than guessed, and sampled across the morph so the
-      // midpoint cannot overflow the frame even if it is wider than either end.
-      uScaleWorld: { value: harmonicFitScale(HARMONIC_A, HARMONIC_B) },
+      // Re-read from the fit table every frame, so the form changes shape
+      // without changing size.
+      uScaleWorld: { value: sampleMorphFit(fitTable, 0) },
       uPointer: { value: [0, 0] as [number, number] },
       uPointerOn: { value: 0 },
       uAspect: { value: 1 },
@@ -117,6 +122,7 @@ export function HarmonicField({
       // rather than sitting at either extreme.
       mat.uniforms.uTime.value = 0
       mat.uniforms.uMorph.value = 0.5
+      mat.uniforms.uScaleWorld.value = sampleMorphFit(fitTable, 0.5)
       mat.uniforms.uPointerOn.value = 0
       if (group.current) group.current.rotation.y = 0.5
       return
@@ -134,6 +140,7 @@ export function HarmonicField({
       1 - Math.pow(0.001, step),
     )
     mat.uniforms.uMorph.value = smoothMorph.current
+    mat.uniforms.uScaleWorld.value = sampleMorphFit(fitTable, smoothMorph.current)
 
     if (group.current) {
       // Constant slow yaw plus a scroll-linked sweep, so the form turns as it

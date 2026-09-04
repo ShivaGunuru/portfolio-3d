@@ -3,7 +3,12 @@ import { describe, expect, it } from 'vitest'
 import {
   HARMONIC_A,
   HARMONIC_B,
+  MORPH_FIT_STEPS,
   buildHarmonicField,
+  buildMorphFitTable,
+  harmonicFitScaleAt,
+  harmonicRadius,
+  sampleMorphFit,
 } from '../three/harmonicGeometry'
 
 describe('harmonic parameter sets', () => {
@@ -45,5 +50,71 @@ describe('buildHarmonicField', () => {
     expect(data.seeds).toHaveLength(1500)
     expect(data.colors).toHaveLength(1500)
     expect(data.randoms).toHaveLength(1500)
+  })
+})
+
+/** The widest radius of a single parameter set, on the same grid the fit uses. */
+function maxRadius(m: readonly number[]): number {
+  let largest = 0
+  for (let i = 0; i < 64; i++) {
+    for (let j = 0; j < 64; j++) {
+      const r = harmonicRadius((i / 64) * Math.PI * 2, (j / 64) * Math.PI, m)
+      if (r > largest) largest = r
+    }
+  }
+  return largest
+}
+
+describe('per-morph fit', () => {
+  it('scales a shape so its widest radius lands on the target', () => {
+    const scale = harmonicFitScaleAt(HARMONIC_A, HARMONIC_B, 0, 1.55)
+    expect(maxRadius(HARMONIC_A) * scale).toBeCloseTo(1.55, 5)
+  })
+
+  it('fits the far endpoint too', () => {
+    const scale = harmonicFitScaleAt(HARMONIC_A, HARMONIC_B, 1, 1.55)
+    expect(maxRadius(HARMONIC_B) * scale).toBeCloseTo(1.55, 5)
+  })
+
+  it('renders both endpoints at the same on-screen size', () => {
+    // This is the whole point of the table. With one fit spanning the morph,
+    // the sphere end came out at roughly half the linear size of the star end
+    // and the object visibly swelled as the page scrolled.
+    const table = buildMorphFitTable(HARMONIC_A, HARMONIC_B)
+    const first = maxRadius(HARMONIC_A) * table[0]
+    const last = maxRadius(HARMONIC_B) * table[MORPH_FIT_STEPS]
+    expect(first).toBeCloseTo(last, 5)
+  })
+
+  it('builds a table of positive, finite scales', () => {
+    const table = buildMorphFitTable(HARMONIC_A, HARMONIC_B)
+    expect(table).toHaveLength(MORPH_FIT_STEPS + 1)
+    for (const value of table) {
+      expect(Number.isFinite(value)).toBe(true)
+      expect(value).toBeGreaterThan(0)
+    }
+  })
+
+  it('samples the table exactly at its endpoints', () => {
+    const table = buildMorphFitTable(HARMONIC_A, HARMONIC_B)
+    expect(sampleMorphFit(table, 0)).toBeCloseTo(table[0], 6)
+    expect(sampleMorphFit(table, 1)).toBeCloseTo(table[MORPH_FIT_STEPS], 6)
+  })
+
+  it('clamps out-of-range morph values instead of reading past the table', () => {
+    const table = buildMorphFitTable(HARMONIC_A, HARMONIC_B)
+    expect(sampleMorphFit(table, -0.5)).toBeCloseTo(table[0], 6)
+    expect(sampleMorphFit(table, 1.5)).toBeCloseTo(table[MORPH_FIT_STEPS], 6)
+  })
+
+  it('never samples outside the range the table covers', () => {
+    const table = buildMorphFitTable(HARMONIC_A, HARMONIC_B)
+    const low = Math.min(...table)
+    const high = Math.max(...table)
+    for (let i = 0; i <= 100; i++) {
+      const value = sampleMorphFit(table, i / 100)
+      expect(value).toBeGreaterThanOrEqual(low - 1e-6)
+      expect(value).toBeLessThanOrEqual(high + 1e-6)
+    }
   })
 })

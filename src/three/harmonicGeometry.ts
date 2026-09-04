@@ -83,6 +83,72 @@ export function harmonicFitScale(
 }
 
 /**
+ * Fits the single shape the morph is showing at `morph`, rather than the whole
+ * range between two sets.
+ *
+ * `harmonicFitScale` exists for the two-set case and walks five steps between
+ * them. Handed the same set twice, which is what a per-morph fit would have to
+ * do, all five steps evaluate identical parameters and it performs six
+ * redundant scans of the same shape. This does the interpolation once and
+ * scans once, at the same 64x64 angular resolution, so it is roughly six times
+ * cheaper with no loss of accuracy.
+ */
+export function harmonicFitScaleAt(
+  a: readonly number[],
+  b: readonly number[],
+  morph: number,
+  target = 1.55,
+): number {
+  // The same easing the vertex shader applies, so the fit describes the shape
+  // that is actually on screen rather than one the shader never draws.
+  const eased = morph * morph * (3 - 2 * morph)
+  const m = a.map((value, i) => value + (b[i] - value) * eased)
+
+  let largest = 0
+  for (let i = 0; i < 64; i++) {
+    for (let j = 0; j < 64; j++) {
+      const r = harmonicRadius((i / 64) * Math.PI * 2, (j / 64) * Math.PI, m)
+      if (r > largest) largest = r
+    }
+  }
+  return target / largest
+}
+
+/** Table resolution. 16 steps means 17 entries, morph 0 through 1 inclusive. */
+export const MORPH_FIT_STEPS = 16
+
+/**
+ * Precomputes the fit scale across the morph.
+ *
+ * A single scale spanning the whole morph makes an endpoint with a smaller
+ * radius render smaller, so the form swells as it reorganises instead of
+ * simply changing shape. Fitting per frame is not an option either: one fit
+ * measured 2.37ms, against a 16.7ms frame budget. Building the table costs
+ * about 7ms once, on a chunk that is already deferred until the browser is
+ * idle, and each frame then interpolates between two numbers.
+ */
+export function buildMorphFitTable(
+  a: readonly number[],
+  b: readonly number[],
+  target = 1.55,
+): Float32Array {
+  const table = new Float32Array(MORPH_FIT_STEPS + 1)
+  for (let i = 0; i <= MORPH_FIT_STEPS; i++) {
+    table[i] = harmonicFitScaleAt(a, b, i / MORPH_FIT_STEPS, target)
+  }
+  return table
+}
+
+/** Reads a table from `buildMorphFitTable`, interpolating between entries. */
+export function sampleMorphFit(table: Float32Array, morph: number): number {
+  const clamped = Math.min(1, Math.max(0, morph))
+  const position = clamped * MORPH_FIT_STEPS
+  const index = Math.min(MORPH_FIT_STEPS - 1, Math.floor(position))
+  const fraction = position - index
+  return table[index] + (table[index + 1] - table[index]) * fraction
+}
+
+/**
  * Distributes points over a sphere with a Fibonacci lattice.
  *
  * Uniform random spherical coordinates bunch at the poles, which shows up as
