@@ -65,9 +65,13 @@ export function About() {
           ))}
         </Reveal>
 
+        {/* No bg-bg-soft. The field is points on a page, not a photograph on a
+            backdrop: a soft-cloud rectangle put a hard edge around it and drew
+            a box where the design wants none. The Hero cutout dropped the same
+            class for a different reason, and this section now matches it. */}
         <Stage
           progress={progress}
-          className="aspect-square w-full max-w-xl justify-self-center bg-bg-soft"
+          className="aspect-square w-full max-w-xl justify-self-center"
         />
       </div>
     </section>
