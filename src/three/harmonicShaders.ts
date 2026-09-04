@@ -34,6 +34,7 @@ export const harmonicVertexShader = /* glsl */ `
   varying vec3  vColor;
   varying float vGlow;
   varying float vTone;
+  varying float vDepth;
 
   /**
    * Classic spherical harmonic radius.
@@ -96,10 +97,24 @@ export const harmonicVertexShader = /* glsl */ `
 
     // Radius doubles as tone: the reaching parts of the form read brighter
     // than the folds, which is what gives a single-colour cloud its depth.
+    //
+    // The smoothstep is a separate job: harmonicRadius floors at 0.12, so
+    // every angle where all four terms happen to cancel lands on that floor
+    // and those points pile into a dark knot at the origin. They carry no
+    // shape information, so they are faded out instead of drawn.
     float shade = clamp((r - 0.4) / 2.2, 0.0, 1.0);
-    vTone  = 0.30 + 0.70 * shade;
+    vTone  = (0.30 + 0.70 * shade) * smoothstep(0.13, 0.45, r);
     vGlow  = influence;
     vColor = aColor;
+
+    // Distance from the camera, normalised across the range the fitted form
+    // actually occupies: the camera sits at z 7.3 and the form is fitted to a
+    // radius of 1.55, so view depth runs about 5.75 to 8.85. The fragment
+    // stage fades the far side with this. Perspective already shrinks distant
+    // points, but over that shallow a range the effect is roughly 25% and
+    // reads as nothing, which is why 42,000 points looked like a flat speckle
+    // field rather than a volume.
+    vDepth = clamp((-viewPos.z - 5.2) / 4.2, 0.0, 1.0);
 
     gl_Position = projectionMatrix * viewPos;
 
@@ -134,6 +149,7 @@ export const harmonicFragmentShader = /* glsl */ `
   varying vec3  vColor;
   varying float vGlow;
   varying float vTone;
+  varying float vDepth;
 
   void main() {
     vec2 offset = gl_PointCoord - vec2(0.5);
@@ -146,9 +162,9 @@ export const harmonicFragmentShader = /* glsl */ `
     // the only thing carrying the highlight's hue.
     vec3 color = mix(vColor, uGlowColor, vGlow * 0.9);
 
-    // Emphasis by presence rather than by brightness: hovered points sit more
-    // solidly against the backdrop instead of washing toward white.
-    float alpha = falloff * uOpacity * vTone * (1.0 + vGlow * 0.35);
+    // The far side fades toward the page. This is the single largest gain in
+    // this pass: it is what turns a flat speckle field into a volume.
+    float alpha = falloff * uOpacity * vTone * mix(1.0, 0.2, vDepth) * (1.0 + vGlow * 0.35);
 
     gl_FragColor = vec4(color, clamp(alpha, 0.0, 1.0));
 

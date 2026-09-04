@@ -81,7 +81,11 @@ export function HarmonicField({
       uAspect: { value: 1 },
       // Sized against the 1px floor, the same trap the portrait hit: below
       // roughly 0.03 at this scale every point clamps and the field goes flat.
-      uSize: { value: 0.05 },
+      // 0.07 rather than 0.05 because fine dark specks on white read as grit:
+      // measured against the alternatives, 24,000 points at 0.08 goes chunky
+      // and 70,000 at 0.042 is lighter for 66% more points, so size alone is
+      // the win here.
+      uSize: { value: 0.07 },
       uScale: { value: 400 },
       uRadius: { value: 0.34 },
       // Zero, for the same reason the Hero head's push ended up at zero: the
