@@ -12,6 +12,8 @@ export interface HeroCutoutData {
   rows: number
   frameWidth: number
   frameHeight: number
+  /** See `bakeHeroCutout`: where the subject's hard bottom edge sits. */
+  bottomCutFraction: number
 }
 
 export type HeroCutoutStatus = 'loading' | 'ready' | 'unavailable'
@@ -33,6 +35,7 @@ function load(): Promise<HeroCutoutData> {
           rows: manifest.rows,
           frameWidth: manifest.frameWidth,
           frameHeight: manifest.frameHeight,
+          bottomCutFraction: manifest.bottomCutFraction,
         })
       img.onerror = () => reject(new Error(`useHeroCutout: failed to load ${spriteUrl}`))
       img.src = spriteUrl

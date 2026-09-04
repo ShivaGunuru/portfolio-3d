@@ -16,12 +16,28 @@ interface HeroCutoutProps {
  * Steps through the baked Hero cutout sprite sheet as the user scrolls.
  *
  * Plain 2D canvas, not WebGL: there is no shader effect left to justify a
- * GPU pipeline once the visual is "the real subject, background removed, no
- * effects." Motion is scroll-scrubbed by drawing whichever single baked
- * frame is nearest the current progress, never a blend of two, which is
- * what real scroll-scrubbed video does and avoids the double-exposure
- * ghosting a crossfade produces wherever the pose changed between frames.
+ * GPU pipeline once the visual is "the real subject, no effects." Motion is
+ * scroll-scrubbed by drawing whichever single baked frame is nearest the
+ * current progress, never a blend of two, which is what real scroll-scrubbed
+ * video does and avoids the double-exposure ghosting a crossfade produces
+ * wherever the pose changed between frames.
  */
+/**
+ * Builds the bottom fade from where the bake says the subject's hard edge is.
+ *
+ * The fade must be fully transparent by the time it reaches that line, not
+ * merely faint: the cut runs about 88% of the frame's width dead straight, and
+ * a straight line at even 7% opacity is one of the most visible things you can
+ * put on a flat background. The ramp starts far enough above it to read as a
+ * dissolve rather than as a second, softer edge.
+ */
+function bottomFade(cutFraction: number) {
+  const end = Math.max(0.2, Math.min(1, cutFraction) - 0.02)
+  const start = Math.max(0, end - 0.26)
+  const pct = (n: number) => `${(n * 100).toFixed(1)}%`
+  return `linear-gradient(to bottom, black 0%, black ${pct(start)}, transparent ${pct(end)})`
+}
+
 export function HeroCutout({ data, progress, still, className }: HeroCutoutProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const lastFrame = useRef(-1)
@@ -109,20 +125,24 @@ export function HeroCutout({ data, progress, still, className }: HeroCutoutProps
     }
   }, [data, progress, still])
 
+  const fade = bottomFade(data.bottomCutFraction)
+
   return (
     <canvas
       ref={canvasRef}
       className={className}
       // Eases the bottom edge out instead of ending on the sharp horizontal
       // line the source video's own frame boundary cuts the subject off at.
-      // A mask, not a second baked alpha ramp: it composes with whatever
-      // alpha the sprite already has (background pixels stay at zero, only
-      // the subject's own bottom edge fades) rather than needing the bake
-      // to know anything about where the canvas will place the frame.
-      style={{
-        maskImage: 'linear-gradient(to bottom, black 0%, black 72%, transparent 96%)',
-        WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 72%, transparent 96%)',
-      }}
+      // A mask, not a second baked alpha ramp, so the bake needs to know
+      // nothing about where the canvas will eventually place the frame.
+      //
+      // The sprite is fully opaque now (see bakeHeroCutout.ts: the frames
+      // keep their own white background instead of having it matted out), so
+      // this fades the rectangle itself rather than just the subject. That
+      // works out to the same thing on screen only because the page behind it
+      // is the same white. If this Hero is ever staged on a colour, the fade
+      // will show as a gradient and this needs revisiting along with it.
+      style={{ maskImage: fade, WebkitMaskImage: fade }}
     />
   )
 }

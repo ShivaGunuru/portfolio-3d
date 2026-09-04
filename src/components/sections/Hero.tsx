@@ -53,9 +53,15 @@ export function Hero() {
           </div>
         </Reveal>
 
+        {/* Deliberately no bg-bg-soft, unlike the About field's box. The
+            baked frames keep their own pure white background rather than
+            having it matted out, so this box has to be the page's white for
+            the two to be the same colour. Staging it on soft-cloud would put
+            a #f5f5f5 frame around a #ffffff rectangle and draw a box around
+            the very thing that is supposed to have no edges. */}
         <HeroCutoutStage
           progress={progress}
-          className="w-full max-w-2xl justify-self-center bg-bg-soft"
+          className="w-full max-w-2xl justify-self-center"
         />
       </div>
     </section>

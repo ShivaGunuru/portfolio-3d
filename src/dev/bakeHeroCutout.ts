@@ -15,6 +15,19 @@ import { chromaKey } from '../three/chromaKey'
  * plain 2D canvas stepping between frames, not WebGL: there is no shader
  * effect left to justify the GPU pipeline.
  *
+ * The current bake removes no background at all, and that is the point.
+ * Every matte this module can pull is an estimate made per frame, so it
+ * wobbles frame to frame wherever the estimate is marginal, and that wobble
+ * is the flicker this Hero kept coming back with. The source clip arrives
+ * already matted onto pure white, and the Hero now sits on a pure white
+ * page, so the background can simply be *kept*: the frame's own white and
+ * the page's white are the same colour, the rectangle's edges never show,
+ * and the silhouette that used to shimmer is no longer a boundary between
+ * two different things. Measured on this clip: background exactly
+ * 255,255,255 across every sampled frame, zero non-white pixels touching the
+ * frame border, and the browser decodes and downscales it to exactly 255.
+ * A matte that is never computed cannot drift. See `matte` below.
+ *
  * Motion is scroll-scrubbed by stepping directly to the nearest baked frame,
  * never crossfading between two. Crossfading two independently-masked
  * frames overlays two full poses at partial opacity mid-transition, which
@@ -42,15 +55,29 @@ export interface CutoutBakeConfig {
   /** Minimum pocket size to promote, as a fraction of total frame area. */
   pocketMinAreaFraction?: number
   /**
-   * Which matte to pull. `chroma` keys a green backdrop per pixel and is the
-   * right choice whenever the footage has one: it needs no reference sampled
-   * from the footage, so nothing can drift between frames, and it yields a
-   * genuinely soft edge rather than a blurred hard mask. `floodfill` handles
-   * an ordinary studio backdrop whose colour overlaps the subject's, which is
-   * a strictly harder problem and carries all the guards documented in
-   * `backgroundSeparation.ts`.
+   * Which matte to pull, or `none` to pull none at all.
+   *
+   * `none` is the current path. It bakes the frames opaque, background and
+   * all, and relies on the footage's own background already being the page's
+   * background colour. That is not a shortcut around the other two: it is
+   * strictly better whenever it applies, because a matte that is never
+   * computed cannot wobble. See this module's doc comment.
+   *
+   * `chroma` keys a green backdrop per pixel and is the right choice
+   * whenever the footage has one and the page is *not* the backdrop colour:
+   * it needs no reference sampled from the footage, so nothing can drift
+   * between frames, and it yields a genuinely soft edge rather than a blurred
+   * hard mask. `floodfill` handles an ordinary studio backdrop whose colour
+   * overlaps the subject's, which is a strictly harder problem and carries
+   * all the guards documented in `backgroundSeparation.ts`.
    */
-  matte?: 'chroma' | 'floodfill'
+  matte?: 'none' | 'chroma' | 'floodfill'
+  /**
+   * `none` only: a pixel whose lowest channel is at or above this counts as
+   * background when placing the crop window. Nothing composites through it,
+   * so it does not need to be exact.
+   */
+  whiteBound?: number
   /** Chroma key: greenness at or below which a pixel is fully subject. */
   keyLow?: number
   /** Chroma key: greenness at or above which a pixel is fully backdrop. */
@@ -68,6 +95,19 @@ export interface BakedCutout {
   rows: number
   frameWidth: number
   frameHeight: number
+  /**
+   * Where the subject's own bottom edge sits, as a fraction of frameHeight.
+   *
+   * The source clip's frame boundary cuts the subject off mid-chest, so the
+   * baked frame ends on a hard horizontal line roughly 88% of the frame's
+   * width across. The runtime fades that out with a CSS mask, and the mask
+   * has to reach full transparency at or above this line or a faint but
+   * perfectly straight edge survives. Reporting it here rather than letting
+   * the component hardcode a percentage is what keeps the two in step: the
+   * crop box is recomputed on every bake, so a hand-tuned stop silently stops
+   * lining up the moment the source clip or the crop margin changes.
+   */
+  bottomCutFraction: number
 }
 
 function loadImage(url: string): Promise<HTMLImageElement> {
@@ -273,7 +313,16 @@ export async function bakeHeroCutout({
   // holes in the hair. If specks ever need attacking, do it with something
   // that can tell a highlight from a gap, not by relaxing this.
   pocketMinAreaFraction = 0.001,
-  matte = 'chroma',
+  // `none`, because the current source clip arrives already matted onto pure
+  // white and the Hero now sits on a pure white page. Keep this in step with
+  // whatever clip is actually in use, the way it tracked the green screen
+  // before.
+  matte = 'none',
+  // The source's background measured exactly 255,255,255 across every sampled
+  // frame, and its antialiased edge is 0.4% of pixels concentrated at 252-254.
+  // 250 puts that whole edge on the background side, which is what the crop
+  // wants: the box is grown by a margin afterwards, so nothing is clipped.
+  whiteBound = 250,
   // Measured on this project's green clip: backdrop greenness 0.992, every
   // sampled subject region at or below 0.04, and almost no pixel mass between
   // 0.05 and 0.25. These sit inside that gap with room at both ends, so they
@@ -303,7 +352,29 @@ export async function bakeHeroCutout({
    *  rather than something derived from a binary mask afterwards. */
   const frameAlphas: (Float32Array | null)[] = new Array(frameCount).fill(null)
 
-  if (matte === 'chroma') {
+  if (matte === 'none') {
+    // No separation of any kind: decode, and keep the pixels exactly as they
+    // came. The only thing derived here is a crude background mask, and it is
+    // used for one purpose, placing the shared crop window. Nothing is
+    // composited through it, which is why a flat threshold is enough where
+    // the other two paths need flood fills and hue gates.
+    for (let f = 0; f < frameCount; f++) {
+      const img = f === 0 ? first : await loadImage(frameUrls[f])
+      workCtx.clearRect(0, 0, w, h)
+      workCtx.drawImage(img, 0, 0, w, h)
+      const data = workCtx.getImageData(0, 0, w, h)
+      frameData[f] = data
+
+      const mask = new Uint8Array(w * h)
+      for (let i = 0; i < w * h; i++) {
+        const p = i * 4
+        const min = Math.min(data.data[p], data.data[p + 1], data.data[p + 2])
+        mask[i] = min >= whiteBound ? 1 : 0
+      }
+      frameMasks[f] = mask
+      onProgress?.(f + 1, frameCount)
+    }
+  } else if (matte === 'chroma') {
     for (let f = 0; f < frameCount; f++) {
       const img = f === 0 ? first : await loadImage(frameUrls[f])
       workCtx.clearRect(0, 0, w, h)
@@ -465,9 +536,14 @@ export async function bakeHeroCutout({
     // falloff across each edge. Eroding and blurring it would only throw that
     // away and re-approximate it, so those steps belong to the flood-fill
     // path, which starts from a hard mask and has no better option.
+    // A null alpha means "write this frame opaque". On the `none` path the
+    // frame's own background is doing the hiding, so punching it out would be
+    // undoing the very thing that makes that path stable.
     const keyed = frameAlphas[f]
     const alpha =
-      keyed ?? featherMask(erode(frameMasks[f], w, h, erodePx), w, h, featherPx)
+      matte === 'none'
+        ? null
+        : (keyed ?? featherMask(erode(frameMasks[f], w, h, erodePx), w, h, featherPx))
 
     const cell = cellCtx.createImageData(frameWidth, frameHeight)
     for (let y = 0; y < frameHeight; y++) {
@@ -479,7 +555,7 @@ export async function bakeHeroCutout({
         cell.data[di] = src.data[si]
         cell.data[di + 1] = src.data[si + 1]
         cell.data[di + 2] = src.data[si + 2]
-        cell.data[di + 3] = Math.round(alpha[sy * w + sx] * 255)
+        cell.data[di + 3] = alpha === null ? 255 : Math.round(alpha[sy * w + sx] * 255)
       }
     }
     cellCtx.putImageData(cell, 0, 0)
@@ -490,5 +566,18 @@ export async function bakeHeroCutout({
     spriteCtx.drawImage(cellCanvas, col * frameWidth, row * frameHeight)
   }
 
-  return { spriteCanvas, frameCount, columns, rows, frameWidth, frameHeight }
+  // maxY is the last row carrying real subject mass; cropY0 is where the
+  // frame starts. The margin added below maxY is white, so the visible cut is
+  // this far down the baked frame.
+  const bottomCutFraction = Math.min(1, (maxY - cropY0 + 1) / frameHeight)
+
+  return {
+    spriteCanvas,
+    frameCount,
+    columns,
+    rows,
+    frameWidth,
+    frameHeight,
+    bottomCutFraction,
+  }
 }

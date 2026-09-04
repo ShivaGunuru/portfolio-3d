@@ -64,11 +64,24 @@
     <h1>bake hero cutout</h1>
     <p>
       Dev-only tool. Rebuilds <code>src/assets/hero-cutout.png</code> and
-      <code>hero-cutout.json</code> from a new set of extracted video frames:
-      the subject with its background removed, packed into a sprite sheet the
-      Hero section steps through as the page scrolls. No particles, no shader
-      effects &mdash; this is real video pixels. Only run via
-      <code>npm run dev</code>, never in the production build.
+      <code>hero-cutout.json</code> from a new set of extracted video frames,
+      packed into a sprite sheet the Hero section steps through as the page
+      scrolls. No particles, no shader effects &mdash; this is real video
+      pixels. Only run via <code>npm run dev</code>, never in the production
+      build.
+    </p>
+    <p>
+      <strong>The current source clip is already matted onto pure white, and
+      the bake keeps that background rather than removing it</strong>
+      (<code>matte: 'none'</code>, the default). The Hero sits on a pure white
+      page, so the frame's white and the page's white are the same colour and
+      the rectangle has no visible edge. This is not a shortcut: a matte that
+      is never computed cannot wobble between frames, which is what every
+      previous flicker on this Hero came down to. If you swap in footage whose
+      background is <em>not</em> the page colour, switch <code>matte</code>
+      back to <code>'chroma'</code> (green screen) or <code>'floodfill'</code>
+      and put <code>bg-bg-soft</code> back on the stage in
+      <code>Hero.tsx</code>.
     </p>
 
     <p><strong>1.</strong> Extract frames with ffmpeg (already on PATH for this
@@ -98,7 +111,15 @@ ffmpeg -i "path/to/source.mp4" -vf fps=&lt;FPS&gt; public/_bake-frames/frame%03d
 
     <p style="margin-top: 24px; opacity: 0.7">
       <strong>3.</strong> Move both downloaded files into
-      <code>src/assets/</code>, overwriting the existing pair. Delete
+      <code>src/assets/</code>, overwriting the existing pair. On the
+      <code>none</code> path every pixel is opaque, so the canvas' RGBA PNG
+      carries a constant alpha channel worth about 1.6 MB of nothing: run
+      <code>ffmpeg -i hero-cutout.png -pix_fmt rgb24 -compression_level 100
+      out.png</code> over it and keep the result. That re-encode is bit-exact
+      on the colour channels (verified), and it also drops the colour-profile
+      chunks, which is what guarantees the browser decodes the background to
+      exactly 255,255,255 rather than colour-managing it a level or two off.
+      Delete
       <code>public/_bake-frames/</code> before committing; it's scratch input,
       not a shipped asset. Then re-run <code>npm run build</code> and check the
       result before pushing &mdash; a bad bake is a rendering regression, not a
@@ -183,6 +204,7 @@ ffmpeg -i "path/to/source.mp4" -vf fps=&lt;FPS&gt; public/_bake-frames/frame%03d
           rows: baked.rows,
           frameWidth: baked.frameWidth,
           frameHeight: baked.frameHeight,
+          bottomCutFraction: baked.bottomCutFraction,
         }
         const jsonBlob = new Blob([JSON.stringify(manifest, null, 2) + '\n'], {
           type: 'application/json',
