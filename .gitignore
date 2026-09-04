@@ -33,3 +33,6 @@ Thumbs.db
 
 # scratch frames extracted for src/dev/bake.html, never a shipped asset
 public/_bake-frames/
+
+# Subagent-driven-development scratch workspace (ledger, briefs, review packages).
+.superpowers/
