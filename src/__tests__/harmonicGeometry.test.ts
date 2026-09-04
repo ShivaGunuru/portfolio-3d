@@ -76,10 +76,15 @@ describe('per-morph fit', () => {
     expect(maxRadius(HARMONIC_B) * scale).toBeCloseTo(1.55, 5)
   })
 
-  it('renders both endpoints at the same on-screen size', () => {
-    // This is the whole point of the table. With one fit spanning the morph,
-    // the sphere end came out at roughly half the linear size of the star end
-    // and the object visibly swelled as the page scrolled.
+  it('fits both endpoints to the same maximum radius', () => {
+    // Guards that buildMorphFitTable builds each endpoint entry per-morph
+    // (via harmonicFitScaleAt at that entry's own morph value) rather than
+    // sharing one scale across the whole table. With one fit spanning the
+    // morph, the sphere end came out at roughly half the linear size of the
+    // star end and the object visibly swelled as the page scrolled. This is
+    // the only test that exercises the table's endpoints against each other,
+    // so an off-by-one in the loop bound or a wrong MORPH_FIT_STEPS would
+    // break it.
     const table = buildMorphFitTable(HARMONIC_A, HARMONIC_B)
     const first = maxRadius(HARMONIC_A) * table[0]
     const last = maxRadius(HARMONIC_B) * table[MORPH_FIT_STEPS]

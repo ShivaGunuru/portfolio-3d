@@ -27,7 +27,10 @@ describe('harmonic shaders', () => {
   it('assigns every varying it declares in the vertex shader', () => {
     for (const name of varyingsIn(harmonicVertexShader)) {
       expect(harmonicVertexShader).toMatch(
-        new RegExp(`${name}\\s*=`),
+        // A real assignment: an `=` not preceded by `<`, `>`, `!` or `=`
+        // (which would make it part of `<=`, `>=`, `!=` or `==`) and not
+        // followed by `=` (which would make it the first character of `==`).
+        new RegExp(`${name}\\s*(?<![<>!=])=(?!=)`),
       )
     }
   })

@@ -57,6 +57,12 @@ export function harmonicRadius(
  * exponents can push the surface wider midway than at either end, and a fixed
  * scale picked from the endpoints alone would let it overflow the frame
  * halfway through the scroll.
+ *
+ * This currently has no caller; `harmonicFitScaleAt` is the live path (see
+ * `buildMorphFitTable`). It also interpolates its `a`/`b` parameters
+ * linearly by step index, while the shader and `harmonicFitScaleAt` both
+ * ease with smoothstep. A future caller must not assume a given step index
+ * here lines up with the same morph value in those two.
  */
 export function harmonicFitScale(
   a: readonly number[],

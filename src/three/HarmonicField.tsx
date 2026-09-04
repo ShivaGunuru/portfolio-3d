@@ -66,7 +66,8 @@ export function HarmonicField({
   )
 
   // Built once. See buildMorphFitTable: this is what keeps the form at a
-  // constant on-screen size while its shape reorganises.
+  // constant fitted (maximum) radius while its shape reorganises. That is
+  // not quite the same as constant on-screen size; see CLAUDE.md.
   const fitTable = useMemo(() => buildMorphFitTable(HARMONIC_A, HARMONIC_B), [])
 
   const uniforms = useMemo(() => {
@@ -79,7 +80,9 @@ export function HarmonicField({
       uHarmB0: { value: HARMONIC_B.slice(0, 4) as unknown as number[] },
       uHarmB1: { value: HARMONIC_B.slice(4, 8) as unknown as number[] },
       // Re-read from the fit table every frame, so the form changes shape
-      // without changing size.
+      // while its fitted (maximum) radius stays constant. Projected
+      // on-screen size still varies somewhat across the morph; see
+      // CLAUDE.md.
       uScaleWorld: { value: sampleMorphFit(fitTable, 0) },
       uPointer: { value: [0, 0] as [number, number] },
       uPointerOn: { value: 0 },

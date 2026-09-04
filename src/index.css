@@ -19,7 +19,7 @@
   /* Surfaces. Neither is text, so neither needs a contrast check on its own.
      Values are Nike's canvas/soft-cloud, adopted directly. */
   --color-bg: #ffffff; /* page background */
-  --color-bg-soft: #f5f5f5; /* neutral "staging" backdrop behind the hero cutout and the 3D field, Nike's soft-cloud */
+  --color-bg-soft: #f5f5f5; /* Nike's soft-cloud. Currently has no consumer in src/: both the hero cutout and the 3D field dropped it. Kept in case the staging idea returns. */
 
   /* Text. Reworked from a light-on-#0b0a14 ladder to a dark-on-white one.
      Values are Nike's own ink/charcoal/ash/mute where those already clear AA

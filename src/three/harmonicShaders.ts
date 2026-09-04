@@ -114,6 +114,10 @@ export const harmonicVertexShader = /* glsl */ `
     // points, but over that shallow a range the effect is roughly 25% and
     // reads as nothing, which is why 42,000 points looked like a flat speckle
     // field rather than a volume.
+    //
+    // The normalisation below runs 5.2 to 9.4, deliberately wider than the
+    // 5.75-8.85 the form actually occupies, so neither end of the real range
+    // saturates against the 0/1 clamp.
     vDepth = clamp((-viewPos.z - 5.2) / 4.2, 0.0, 1.0);
 
     gl_Position = projectionMatrix * viewPos;
@@ -164,6 +168,11 @@ export const harmonicFragmentShader = /* glsl */ `
 
     // The far side fades toward the page. This is the single largest gain in
     // this pass: it is what turns a flat speckle field into a volume.
+    //
+    // The trailing (1.0 + vGlow * 0.35) carries near-cursor emphasis as more
+    // presence (higher alpha), not more brightness: under source-alpha
+    // blending an over-driven colour just clips to white instead of reading
+    // as glow.
     float alpha = falloff * uOpacity * vTone * mix(1.0, 0.2, vDepth) * (1.0 + vGlow * 0.35);
 
     gl_FragColor = vec4(color, clamp(alpha, 0.0, 1.0));
