@@ -14,7 +14,7 @@
 
 - No em dashes anywhere in code, comments, or copy. Enforced for site copy by `src/__tests__/content.test.ts`; apply the same rule to comments by hand.
 - No new npm dependencies.
-- `src/index.css` is the only file where a hex value or font name may appear. The exception already in the tree is `HeadStage.tsx`'s `getComputedStyle` fallbacks, which must stay in step with the tokens.
+- Per CLAUDE.md: **never hardcode a colour or font in a component**; use the Tailwind utilities or read the custom property. `src/index.css` is where the tokens live. Two things are deliberately outside that rule and stay: `HeadStage.tsx`'s `getComputedStyle` fallbacks, which must be kept in step with the tokens, and colour literals passed as arguments inside test files, which are test inputs rather than design values.
 - `prefers-reduced-motion` behaviour must not regress. The field holds a single still frame at morph 0.5; verified by `src/__tests__/reducedMotion.test.ts` plus a manual check in Task 5.
 - The field must not render at all below 768px. Unchanged by this plan, reconfirmed in Task 5.
 - No layout shift. The stage box is reserved before the scene loads; this plan does not touch that.
