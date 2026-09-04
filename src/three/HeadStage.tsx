@@ -44,10 +44,16 @@ export function HeadStage({ progress, className, reducedMotion }: HeadStageProps
 
   // Static for the session: design tokens don't change after the stylesheet
   // is applied, so this is computed once rather than re-read every render.
+  //
+  // The fallbacks only apply if the stylesheet has not resolved, which should
+  // not happen, but they still have to be kept in step with src/index.css:
+  // they sat at the old violet-on-near-black values for a while after the
+  // palette went light, so the one path that could ever have used them would
+  // have rendered a scene from a design that no longer exists.
   const [tokens] = useState(() => ({
-    base: readToken('--color-head-fg', '#B9B4E8'),
-    accent: readToken('--color-accent', '#E8A33D'),
-    glow: readToken('--color-head-glow', '#FFE3B0'),
+    base: readToken('--color-head-fg', '#1a1a1a'),
+    accent: readToken('--color-accent', '#8b6225'),
+    glow: readToken('--color-head-glow', '#d98a2e'),
   }))
 
   useEffect(() => {

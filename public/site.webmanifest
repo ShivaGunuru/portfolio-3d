@@ -4,8 +4,8 @@
   "description": "AI engineer with a backend foundation, building RAG and applied LLM systems, plus real project case studies and a content-creation background.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0B0A14",
-  "theme_color": "#0B0A14",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "icons": [
     {
       "src": "/icon-180.png",
