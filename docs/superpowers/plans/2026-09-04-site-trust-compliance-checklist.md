@@ -72,11 +72,11 @@ No new dependency: routing is plain Vite multi-page output plus a static link, n
 - Modify: `src/components/SiteFooter.tsx` (add the Terms link)
 - Modify: `src/__tests__/legalCopy.test.ts` (cover the new content)
 
-- [ ] Write terms content: content provided "as is", no warranty of accuracy or availability, external links (GitHub, LinkedIn, Instagram, the AI Voice Agent repo) are not controlled by the site owner and are governed by their own terms, no reproduction of site content/design/3D field code without permission, governing assumption is the owner's own jurisdiction (name it honestly rather than guessing a jurisdiction).
-- [ ] Build the page from `LegalLayout`, following Task 1's pattern exactly.
-- [ ] Wire the new HTML entry and footer link.
-- [ ] Run the full verification suite from Task 1's last step.
-- [ ] Commit.
+- [x] Write terms content: content provided "as is", no warranty of accuracy or availability, external links (GitHub, LinkedIn, Instagram, the AI Voice Agent repo) are not controlled by the site owner and are governed by their own terms, no reproduction of site content/design/3D field code without permission, governing assumption is the owner's own jurisdiction (name it honestly rather than guessing a jurisdiction).
+- [x] Build the page from `LegalLayout`, following Task 1's pattern exactly.
+- [x] Wire the new HTML entry and footer link.
+- [x] Run the full verification suite from Task 1's last step.
+- [x] Commit.
 
 ---
 
