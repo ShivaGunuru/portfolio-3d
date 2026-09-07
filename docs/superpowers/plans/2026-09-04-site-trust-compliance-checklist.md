@@ -50,13 +50,13 @@ This changes what several checklist items actually require. Noted per item below
 
 No new dependency: routing is plain Vite multi-page output plus a static link, not a router library.
 
-- [ ] Write `src/content/legal.ts` with the privacy policy content, honestly reflecting the ground truth above (no cookies, no tracking, no data collection beyond a visitor's own voluntary email/social contact, hosting disclosure with a link to Vercel's actual privacy policy).
-- [ ] Write `src/__tests__/legalCopy.test.ts` covering that content (no em dashes, no placeholders, no empty strings).
-- [ ] Build `LegalLayout.tsx` and `PrivacyPolicy.tsx` from existing design tokens (`font-display`, `font-mono`, `text-body`, `text-dim`, `bg-bg`, `border-edge`), with a working "back to home" link and an `<h1>` for a real document outline.
-- [ ] Add `privacy.html` + `privacy-main.tsx`, wire `vite.config.ts`'s multi-page `input`.
-- [ ] Add `SiteFooter.tsx` with a link to `/privacy`, mount it in `App.tsx`.
-- [ ] Run `npm test`, `npm run typecheck`, `npm run build`; confirm `dist/privacy.html` exists in the build output.
-- [ ] Commit.
+- [x] Write `src/content/legal.ts` with the privacy policy content, honestly reflecting the ground truth above (no cookies, no tracking, no data collection beyond a visitor's own voluntary email/social contact, hosting disclosure with a link to Vercel's actual privacy policy).
+- [x] Write `src/__tests__/legalCopy.test.ts` covering that content (no em dashes, no placeholders, no empty strings).
+- [x] Build `LegalLayout.tsx` and `PrivacyPolicy.tsx` from existing design tokens (`font-display`, `font-mono`, `text-body`, `text-dim`, `bg-bg`, `border-edge`), with a working "back to home" link and an `<h1>` for a real document outline.
+- [x] Add `privacy.html` + `privacy-main.tsx`, wire `vite.config.ts`'s multi-page `input`.
+- [x] Add `SiteFooter.tsx` with a link to `/privacy`, mount it in `App.tsx`.
+- [x] Run `npm test`, `npm run typecheck`, `npm run build`; confirm `dist/privacy.html` exists in the build output.
+- [x] Commit.
 
 ---
 
