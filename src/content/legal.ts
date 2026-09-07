@@ -135,3 +135,42 @@ export const termsOfUse: LegalDocument = {
     },
   ],
 }
+
+/**
+ * Short on purpose: the honest content is "none", and padding that out to
+ * look more substantial would be the opposite of what this page is for.
+ * Re-verified with the same grep as the privacy policy immediately before
+ * this was written, not assumed to still be true from an earlier check.
+ */
+export const cookiesPolicy: LegalDocument = {
+  title: 'Cookies Policy',
+  updated: '4 September 2026',
+  intro:
+    'This site does not set cookies. This page says so plainly, and explains the one part of serving a web page that is outside its control.',
+  sections: [
+    {
+      heading: 'Cookies set by this site',
+      body: [
+        'None. This site\'s own code sets no cookies of any kind, first-party or third-party, and reads no cookie that might already exist in your browser. There is nothing here for a cookie banner to ask permission for.',
+      ],
+    },
+    {
+      heading: 'What is outside this site\'s control',
+      body: [
+        'This site is hosted by Vercel Inc. Delivering any web page necessarily involves the hosting provider\'s own edge network processing standard connection metadata, the same as any web host, regardless of what code the site itself runs. That is Vercel\'s infrastructure, not a cookie this site sets, and it is governed by Vercel\'s own privacy policy: https://vercel.com/legal/privacy-policy.',
+      ],
+    },
+    {
+      heading: 'If this ever changes',
+      body: [
+        'If a future version of this site ever adds a cookie, for analytics or anything else, this page will be rewritten in the same commit that adds it, and it will say specifically what is set and why rather than staying this general.',
+      ],
+    },
+    {
+      heading: 'Contact',
+      body: [
+        'Questions about this policy can go to the email address listed in the Contact section of the site.',
+      ],
+    },
+  ],
+}

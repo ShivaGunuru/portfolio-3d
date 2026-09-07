@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { privacyPolicy, termsOfUse } from '../content/legal'
+import { cookiesPolicy, privacyPolicy, termsOfUse } from '../content/legal'
 import type { LegalDocument } from '../content/legal'
 
 /**
@@ -24,6 +24,7 @@ function everyString(doc: LegalDocument): string[] {
 const documents: Record<string, LegalDocument> = {
   privacyPolicy,
   termsOfUse,
+  cookiesPolicy,
 }
 
 describe('legal page copy', () => {

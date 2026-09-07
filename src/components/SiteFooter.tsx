@@ -1,9 +1,8 @@
 /**
- * The one place the site's legal pages (privacy, terms, and whatever joins
- * them later) are reachable from. They are separate HTML entries, not
- * sections of the single-page app (see `vite.config.ts`), so they need a
- * real `<a>` with a real `href` here rather than a scroll-anchor like the
- * nav's.
+ * The one place the site's legal pages (privacy, terms, cookies) are
+ * reachable from. They are separate HTML entries, not sections of the
+ * single-page app (see `vite.config.ts`), so they need a real `<a>` with a
+ * real `href` here rather than a scroll-anchor like the nav's.
  */
 export function SiteFooter() {
   return (
@@ -27,6 +26,14 @@ export function SiteFooter() {
               className="font-mono text-[11px] tracking-[0.14em] text-faint uppercase transition-colors hover:text-accent"
             >
               Terms
+            </a>
+          </li>
+          <li>
+            <a
+              href="/cookies.html"
+              className="font-mono text-[11px] tracking-[0.14em] text-faint uppercase transition-colors hover:text-accent"
+            >
+              Cookies
             </a>
           </li>
         </ul>

@@ -27,6 +27,7 @@ export default defineConfig({
         main: resolve(import.meta.dirname, 'index.html'),
         privacy: resolve(import.meta.dirname, 'privacy.html'),
         terms: resolve(import.meta.dirname, 'terms.html'),
+        cookies: resolve(import.meta.dirname, 'cookies.html'),
       },
       output: {
         // Three.js is by far the heaviest dependency and changes far less often
