@@ -90,8 +90,8 @@ No new dependency: routing is plain Vite multi-page output plus a static link, n
 - Create: `cookies.html`
 - Modify: `vite.config.ts`, `src/components/SiteFooter.tsx`, `src/__tests__/legalCopy.test.ts`
 
-- [ ] Write cookies content: no first-party cookies are set by this site's own code (true per the grep above); note that the hosting provider's own edge network may log standard request metadata regardless of any code on this site, same as any web host, with a link to Vercel's own privacy policy for specifics; commit to updating this page the day that ever changes.
-- [ ] Build, wire, verify, commit, following Tasks 1 and 2's pattern.
+- [x] Write cookies content: no first-party cookies are set by this site's own code (true per the grep above); note that the hosting provider's own edge network may log standard request metadata regardless of any code on this site, same as any web host, with a link to Vercel's own privacy policy for specifics; commit to updating this page the day that ever changes.
+- [x] Build, wire, verify, commit, following Tasks 1 and 2's pattern.
 
 ---
 
