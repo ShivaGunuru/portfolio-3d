@@ -72,3 +72,66 @@ export const privacyPolicy: LegalDocument = {
     },
   ],
 }
+
+/**
+ * The governing-law section deliberately names no country. A specific
+ * jurisdiction is a real legal fact, not a stylistic choice, and this
+ * document guesses at nothing: better a true general statement than a
+ * confident wrong one. If the site owner wants a named jurisdiction, that is
+ * theirs to add.
+ *
+ * The "no reproduction without permission" claim is checked, not assumed:
+ * the repository this site is built from has no LICENSE file, so by default
+ * copyright law nothing here is licensed for reuse even though the source is
+ * publicly readable on GitHub.
+ */
+export const termsOfUse: LegalDocument = {
+  title: 'Terms of Use',
+  updated: '4 September 2026',
+  intro:
+    'This page covers the terms for using this site, the personal portfolio of Shiva Gunuru. By visiting it, you agree to these terms.',
+  sections: [
+    {
+      heading: 'The content here',
+      body: [
+        'Everything on this site, the project write-ups, the measured results quoted in them, the design, and the generative 3D field, is provided as is, without warranty of any kind, express or implied, including that it is accurate, complete, or continuously available. Project results are described as measured at the time they were written and linked to their source repository where one is public; they are not guarantees about any other system built the same way.',
+      ],
+    },
+    {
+      heading: 'Ownership and reuse',
+      body: [
+        'The site\'s design, its written content, and its code are not licensed for reuse. The code for this site is kept in a public GitHub repository, which means you can read it, not that you may copy, redistribute, or build on it: the repository carries no open-source license, so by default copyright law reserves those rights. If you want to use any part of it, ask first, using the contact details in the Contact section.',
+      ],
+    },
+    {
+      heading: 'Links to other sites',
+      body: [
+        'The Contact section links to GitHub, LinkedIn, and Instagram profiles, and the Work section links to public project repositories. None of those are operated by this site, and none of their content, availability, or terms are controlled by it. Visiting them is subject to whatever terms that service sets, not these.',
+      ],
+    },
+    {
+      heading: 'Liability',
+      body: [
+        'To the extent the law allows it, use of this site is at your own risk, and it is not liable for any loss or damage arising from your use of it, including from relying on anything it describes or links to.',
+      ],
+    },
+    {
+      heading: 'Governing law',
+      body: [
+        'These terms are governed by the laws applicable to the site owner\'s own place of residence, without regard to conflict-of-law rules, rather than a jurisdiction picked for effect.',
+      ],
+    },
+    {
+      heading: 'Changes to these terms',
+      body: [
+        'If these terms change, this page will be updated and the date below will move forward. Continuing to use the site after a change means you accept the update.',
+      ],
+    },
+    {
+      heading: 'Contact',
+      body: [
+        'Questions about these terms can go to the email address listed in the Contact section of the site.',
+      ],
+    },
+  ],
+}
