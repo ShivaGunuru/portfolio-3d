@@ -1,3 +1,5 @@
+import { resolve } from 'node:path'
+
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -16,6 +18,15 @@ export default defineConfig({
         deps.filter((dep) => !/[/\\]three-[^/\\]*\.js$/.test(dep)),
     },
     rollupOptions: {
+      // Vite serves any .html file at the project root automatically in dev,
+      // but the production build only emits what is explicitly listed here.
+      // Leaving this unset builds index.html alone, which is why a page
+      // like privacy.html can dev-serve fine and still 404 once deployed:
+      // dev and prod silently diverging is the trap this list closes.
+      input: {
+        main: resolve(import.meta.dirname, 'index.html'),
+        privacy: resolve(import.meta.dirname, 'privacy.html'),
+      },
       output: {
         // Three.js is by far the heaviest dependency and changes far less often
         // than app code, so splitting it keeps the app chunk cheap to re-download

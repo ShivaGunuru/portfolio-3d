@@ -1,4 +1,5 @@
 import { BottomMarquee } from './components/BottomMarquee'
+import { SiteFooter } from './components/SiteFooter'
 import { SiteHeader } from './components/SiteHeader'
 import { About } from './components/sections/About'
 import { Contact } from './components/sections/Contact'
@@ -32,6 +33,8 @@ export default function App() {
       {/* Outside main, which carries the page's horizontal padding, so this
           band is free to run edge to edge. */}
       <BottomMarquee />
+
+      <SiteFooter />
     </>
   )
 }
