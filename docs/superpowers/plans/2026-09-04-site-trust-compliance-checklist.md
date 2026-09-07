@@ -101,11 +101,35 @@ No new dependency: routing is plain Vite multi-page output plus a static link, n
 
 **Files:** none known in advance; fix forward wherever the audit finds a gap. Likely candidates based on a static read: the Hero cutout canvas and About field canvas are `aria-hidden`, already correct per CLAUDE.md; the skip-to-content link in `App.tsx` already exists; nav links already have real link text (no icon-only buttons found in a static read).
 
-- [ ] Tab through the entire page with a keyboard only (no mouse): confirm every interactive element (nav links, the "See the work" CTA, project repo links, contact links, the new legal-page links from Tasks 1 to 3) is reachable in a sensible order and shows a visible focus state.
-- [ ] Confirm every `<img>` in the shipped site (there are very few; most visuals are canvas-based and already `aria-hidden`) has correct alt text, or is marked decorative if purely ornamental.
-- [ ] Run an automated pass (axe or Lighthouse accessibility) against the built site and fix anything it flags that the above two checks did not already catch.
-- [ ] Run the full verification suite.
-- [ ] Commit, or record "no changes needed" if the audit found nothing, per this plan's own no-fabrication rule: do not invent a change to justify a commit.
+- [x] Tab through the entire page with a keyboard only (no mouse): confirm every interactive element (nav links, the "See the work" CTA, project repo links, contact links, the new legal-page links from Tasks 1 to 3) is reachable in a sensible order and shows a visible focus state.
+- [x] Confirm every `<img>` in the shipped site (there are very few; most visuals are canvas-based and already `aria-hidden`) has correct alt text, or is marked decorative if purely ornamental.
+- [x] Run an automated pass (axe or Lighthouse accessibility) against the built site and fix anything it flags that the above two checks did not already catch.
+- [x] Run the full verification suite.
+- [x] Commit, or record "no changes needed" if the audit found nothing, per this plan's own no-fabrication rule: do not invent a change to justify a commit.
+
+**Audit findings, 2026-09-08. No code changes made; none were needed.**
+
+- **Keyboard reachability and focus visibility.** Every interactive element on the home page and all three legal pages is reachable and shows a visible `:focus-visible` outline (`2px solid var(--color-accent)`, defined once in `src/index.css` and applied sitewide with no overrides). Confirmed with real hardware-simulated Tab key presses against the actual production build (`npm run preview`, not the dev server), from a freshly opened browser tab with no prior mouse interaction, and captured in a screenshot showing the outline rendered on the Privacy page's "Back to site" link.
+
+  Two false leads were chased and ruled out before that clean result, recorded here so they are not rediscovered as if new:
+  - A synthetic Tab keypress dispatched by the browser-automation tool used for this audit inconsistently skipped between 0 and 5 elements from a nominally identical starting state across repeated trials. That inconsistency, correlated with unrelated prior mouse-click position rather than DOM order, is a property of the automation harness's synthetic key dispatch, not of the site: real, hardware-driven Tab presses did not reproduce it. A hypothesis that Tailwind v4's `sr-only` (`clip-path: inset(50%)`) was the cause was tested directly by switching the skip link to the older `clip: rect(0,0,0,0)` technique; the anomaly persisted identically, disproving the hypothesis, so that change was reverted rather than kept as an unearned "fix".
+  - `Element.focus({ focusVisible: true })`, used to probe focus styling without relying on the flaky synthetic Tab key, appeared to show no outline on the legal pages. This tracked the browser's own last-input-modality state, not a page-specific CSS gap: real mouse clicks made via the automation tool in between test calls, in the same browser tab, correctly flipped that state away from "keyboard-like", which is exactly what `:focus-visible` is designed to do. A fresh tab with keyboard-only input showed the outline correctly on every page tested.
+
+- **Alt text.** Zero `<img>` elements exist anywhere in `src/` (`grep -rn "<img" src/` returns nothing), so there is nothing to caption. Both canvas-based visuals (`src/components/HeroCutoutStage.tsx`, `src/three/Stage.tsx`) already carry `aria-hidden="true"`, confirmed by reading both files.
+
+- **Automated pass.** Lighthouse accessibility, run against the actual production build (`npm run build && npm run preview`), not the dev server:
+
+  | Page | Device | Accessibility |
+  |---|---|---:|
+  | `/` | desktop | 100 |
+  | `/` | mobile | 100 |
+  | `/privacy.html` | desktop | 100 |
+  | `/terms.html` | desktop | 100 |
+  | `/cookies.html` | desktop | 100 |
+
+  The only failing audits anywhere were `cumulative-layout-shift` (0.041, pre-existing, not an accessibility check) and `llms-txt` (pre-existing) on `/`, and `is-crawlable` on the three legal pages, which is Lighthouse correctly flagging the `noindex` meta tag Tasks 1 to 3 set on those pages deliberately, not a defect.
+
+- **Verification suite:** `npm test` (46/46), `npm run typecheck`, `npm run build` (all four HTML entries present in `dist/`), all green, unchanged from Task 3 since no source file changed.
 
 ---
 
