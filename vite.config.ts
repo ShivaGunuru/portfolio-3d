@@ -1,11 +1,38 @@
 import { resolve } from 'node:path'
 
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
+import { projects, site } from './src/content/site'
+import { buildBands } from './src/preloader/bands'
+import { PRELOADER_PLACEHOLDER, renderPreloaderMarkup } from './src/preloader/markup'
+
+/**
+ * Writes the preloader overlay into index.html at build (and dev-serve) time.
+ *
+ * The overlay has to be static HTML: a React component cannot paint until the
+ * JS bundle has downloaded and run, which would show a blank page first,
+ * exactly what the preloader exists to prevent. Generating it here, rather
+ * than hand-writing it into index.html, keeps site.ts the only place copy
+ * lives. Pages without the placeholder (the legal pages) pass through
+ * untouched.
+ */
+function preloaderHtml(): Plugin {
+  return {
+    name: 'preloader-html',
+    transformIndexHtml(html) {
+      if (!html.includes(PRELOADER_PLACEHOLDER)) return html
+      return html.replace(
+        PRELOADER_PLACEHOLDER,
+        renderPreloaderMarkup(buildBands(site.name, site.role, projects)),
+      )
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), preloaderHtml()],
   build: {
     // The 3D scene is loaded lazily and deliberately late (see src/three/Stage.tsx),
     // but the bundler still emits a <link rel="modulepreload"> for the three.js

@@ -72,6 +72,21 @@
     /* Anchor targets clear the fixed header instead of hiding behind it. */
     scroll-padding-top: 6rem;
     -webkit-text-size-adjust: 100%;
+    /* Reserve the scrollbar so mounting content can't shift the layout. This
+       has to sit on html, the element that actually scrolls the viewport: on
+       body it did nothing. It matters now because the preloader's scroll lock
+       below hides the scrollbar, and without a reserved gutter the whole page
+       would widen by a scrollbar's width under the overlay, then snap back
+       narrower the moment the overlay is removed. */
+    scrollbar-gutter: stable;
+  }
+
+  /* Scroll lock while the preloader is up. It releases itself when run.ts
+     removes the node, so there is no class to forget to clear. Lenis scrolls
+     programmatically, which overflow: hidden does not stop, so
+     useSmoothScroll also stops Lenis until the reveal. */
+  html:has(#preloader) {
+    overflow: hidden;
   }
 
   body {
@@ -79,8 +94,6 @@
     color: var(--color-fg);
     font-family: var(--font-sans);
     font-weight: 300;
-    /* Reserve the scrollbar so mounting content can't shift the layout. */
-    scrollbar-gutter: stable;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -129,6 +142,118 @@
   .marquee-track {
     /* Slow enough to read as atmosphere rather than a stock ticker. */
     animation: marquee-drift 28s linear infinite;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Preloader: marquee shutters.
+
+   Markup is static HTML written into index.html at build time (see the
+   preloaderHtml plugin in vite.config.ts), so these rules have to style it
+   before any JS runs. In a production build this file is a render-blocking
+   <link>, so the overlay paints styled on the very first frame.
+
+   Reduced motion needs no branch here either. The base-layer block forces
+   every animation and transition to 0.01ms, so the bands sit still and the
+   reveal becomes an instant cut, which is the right reduced-motion behaviour.
+   --------------------------------------------------------------------------- */
+@layer components {
+  .preloader {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .preloader-band {
+    display: flex;
+    flex: 1 1 0;
+    align-items: center;
+    overflow: hidden;
+    background-color: var(--color-fg);
+    /* Six fractional heights round to whole pixels independently, which can
+       leave a hairline of white page between two bands, most visibly once
+       they are moving as separate layers. Painting 1px past the bottom edge
+       covers it. */
+    box-shadow: 0 1px 0 var(--color-fg);
+    transition: transform 0.9s cubic-bezier(0.65, 0, 0.35, 1);
+    transition-delay: calc(var(--i) * 70ms);
+    will-change: transform;
+  }
+
+  .preloader-track {
+    display: flex;
+    width: max-content;
+    animation: marquee-drift 30s linear infinite;
+    /* Hidden until the fonts land, so the bands never visibly swap from a
+       fallback face. run.ts adds has-fonts on document.fonts.ready. */
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+  }
+
+  .preloader.has-fonts .preloader-track {
+    opacity: 1;
+  }
+
+  /* marquee-drift travels rightward; reversing it gives the leftward bands. */
+  .preloader-band[data-dir='left'] .preloader-track {
+    animation-direction: reverse;
+  }
+
+  .preloader-track > span {
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    color: var(--color-faint);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* The name band's run is far wider at display size, so it needs a longer
+     loop to drift at a similar on-screen speed to the mono bands. */
+  .preloader-band--name .preloader-track {
+    animation-duration: 45s;
+  }
+
+  .preloader-band--name .preloader-track > span {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 7vw, 5.5rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--color-bg);
+  }
+
+  .preloader-progress {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 2px;
+    background-color: var(--color-accent);
+    transform: scaleX(var(--p, 0));
+    transform-origin: left;
+    transition:
+      transform 0.4s ease-out,
+      opacity 0.3s ease-out;
+  }
+
+  .preloader.is-leaving {
+    pointer-events: none;
+  }
+
+  .preloader.is-leaving .preloader-progress {
+    opacity: 0;
+  }
+
+  /* 101%, not 100%: the box-shadow above paints 1px past the band, which
+     would otherwise stay on screen as a sliver at the edge. */
+  .preloader.is-leaving .preloader-band[data-dir='left'] {
+    transform: translate3d(-101%, 0, 0);
+  }
+
+  .preloader.is-leaving .preloader-band[data-dir='right'] {
+    transform: translate3d(101%, 0, 0);
   }
 }
 
