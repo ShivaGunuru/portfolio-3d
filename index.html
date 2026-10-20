@@ -84,6 +84,10 @@
     </script>
   </head>
   <body>
+    <!-- The build replaces the next comment with the preloader overlay, written
+         from src/content/site.ts by the preloaderHtml plugin in vite.config.ts.
+         It is static HTML so it paints on the first frame, before any JS. -->
+    <!-- preloader -->
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
