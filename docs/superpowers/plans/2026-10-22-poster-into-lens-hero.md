@@ -28,26 +28,26 @@
 
 **Produces:** `HERO_PIN_DISTANCE = 250`; `heroPhases(p) → { poster, push, titles }` (push eased); `coverZoom(w, h, lensRadiusPx)`; `pushZoom(push, cover)` (`= exp(ln(cover * 1.15) * push)`); `isInsideLens(zoom, cover)`; `cameraTransform({ lensX, lensY, width, height, zoom, push }) → { tx, ty, scale }`, applied as `translate(tx, ty) scale(scale)` with origin `0 0`.
 
-- [ ] Write the tests first. Phase boundaries: poster ends at 0.55, push spans 0.55 to 0.9, titles start at 0.84. `pushZoom` is 1 at push 0 and passes `cover` before push 1. The transform is the identity at push 0, and at push 1 it maps the lens point to the viewport centre.
-- [ ] Run them and expect FAIL. Implement. Run them and expect PASS. Commit.
+- [x] Write the tests first. Phase boundaries: poster ends at 0.55, push spans 0.55 to 0.9, titles start at 0.84. `pushZoom` is 1 at push 0 and passes `cover` before push 1. The transform is the identity at push 0, and at push 1 it maps the lens point to the viewport centre.
+- [x] Run them and expect FAIL. Implement. Run them and expect PASS. Commit.
 
 ### Task 2: Assets and portrait
 
 **Files:** `src/assets/hero-lens-still.png`, `.json` (already extracted: 996x680 at 9.33s, lens `x 0.4789 y 0.3882 r 0.0529`, normalised); `src/index.css` (add `--color-poster`); `HeroCutout.tsx` (delete `bottomFade` and the mask); `HeroCutoutStage.tsx` (accept `boxRef` and `stillRef`, render the still `<img>` as an invisible overlay, and use `mix-blend-multiply` on both).
 
-- [ ] Make the edits; typecheck and run the tests; commit.
+- [x] Make the edits; typecheck and run the tests; commit.
 
 ### Task 3: Layers and camera
 
 **Files:** Create `src/hooks/useHeroCamera.ts` and `src/components/HeroLensCard.tsx`; modify `Hero.tsx`.
 
-- [ ] `Hero.tsx`: the section becomes `md:h-svh`, with negative side margins so its layers run edge to edge. Inside it: a camera layer containing the back name, the content grid (sitting above `--band-h`) and the band, all `aria-hidden` except the existing content.
-- [ ] `useHeroCamera`: `measure()` places the box so its chest cut sits 30% into the band, and computes the lens point, the lens radius and `cover`. It runs on resize, `fonts.ready` and the ScrollTrigger `refresh` event. The rAF loop writes poster progress to the ref the cutout reads, the drifts, the camera transform, the still and camera visibility, the card visibility, the title rises and the band offsets. Each value is written only when it changes.
-- [ ] Bands trigger: `ScrollTrigger.create({ trigger: '#work', start: 'top bottom', end: 'top 35%', scrub: true })`.
-- [ ] `HeroLensCard`: a portal to `body`, fixed, z-40, invisible by default, with six strips each holding a 600%-tall copy of the card offset by `-i * 100%`.
-- [ ] Typecheck, test and build; commit.
+- [x] `Hero.tsx`: the section becomes `md:h-svh`, with negative side margins so its layers run edge to edge. Inside it: a camera layer containing the back name, the content grid (sitting above `--band-h`) and the band, all `aria-hidden` except the existing content.
+- [x] `useHeroCamera`: `measure()` places the box so its chest cut sits 30% into the band, and computes the lens point, the lens radius and `cover`. It runs on resize, `fonts.ready` and the ScrollTrigger `refresh` event. The rAF loop writes poster progress to the ref the cutout reads, the drifts, the camera transform, the still and camera visibility, the card visibility, the title rises and the band offsets. Each value is written only when it changes.
+- [x] Bands trigger: `ScrollTrigger.create({ trigger: '#work', start: 'top bottom', end: 'top 35%', scrub: true })`.
+- [x] `HeroLensCard`: a portal to `body`, fixed, z-40, invisible by default, with six strips each holding a 600%-tall copy of the card offset by `-i * 100%`.
+- [x] Typecheck, test and build; commit.
 
 ### Task 4: Verify and document
 
-- [ ] Production preview at 1440x900 and 1280x720. Sample the phases at `p` = 0.3, 0.6, 0.75, 0.83, 0.95, then Work at the bands' midpoint and end. Check reverse scroll, a nav click to Work, reduced motion, 768px, and the console.
-- [ ] Update the Hero section of `CLAUDE.md` (the fade mask is gone; the poster, the push, the lens card, the stacking-context rule, and the still manifest). Commit.
+- [x] Production preview at 1440x900 and 1280x720. Sample the phases at `p` = 0.3, 0.6, 0.75, 0.83, 0.95, then Work at the bands' midpoint and end. Check reverse scroll, a nav click to Work, reduced motion, 768px, and the console.
+- [x] Update the Hero section of `CLAUDE.md` (the fade mask is gone; the poster, the push, the lens card, the stacking-context rule, and the still manifest). Commit.

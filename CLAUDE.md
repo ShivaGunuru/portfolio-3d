@@ -104,6 +104,36 @@ The drawn pointer is skipped under `(pointer: coarse)`, since imitating a mouse 
 
 **That union's bounding box is trimmed by mass, not raw min/max.** A single frame's stray misclassified pixel (a corner vignette a hair's-breadth outside the backdrop bound, in a frame the clip's own exposure had drifted for) otherwise dictates the crop for all 36 frames on its own. Walking each axis's per-column/row subject-pixel count until it passes a small fraction (0.03%) of the total mass finds the real edge and ignores that kind of speck, the way a percentile ignores a handful of outliers.
 
+#### The poster into lens sequence
+
+The Hero is one pinned sequence, 250% of the viewport long. Spec: `docs/superpowers/specs/2026-10-22-poster-into-lens-hero-design.md`.
+
+| Pin progress | Phase |
+|---|---|
+| 0 to 0.55 | **Poster.** Frames scrub; a giant pale `site.name` drifts left behind the head; an ink band of `site.role` drifts right over the chest cut |
+| 0.55 to 0.9 | **Push.** The whole Hero (text, name, portrait, band) scales into the left lens as one CSS transform |
+| 0.84 to 1 | **Inside the lens.** A fixed ink card; the four project titles rise in |
+| after the pin | **Bands.** As `#work` scrolls up behind the card, six strips slide off alternately |
+
+| File | Role |
+|---|---|
+| `src/hero/heroTimeline.ts` | Pure: phases, cover zoom, push zoom, camera transform, title and strip offsets. Tested |
+| `src/hooks/useHeroCamera.ts` | Measures the layout, then one rAF loop of direct style writes |
+| `src/components/HeroLensCard.tsx` | The ink card, portalled to `body` |
+| `src/assets/hero-lens-still.png` + `.json` | Last poster pose at source resolution, plus its lens centre |
+
+**The portrait multiplies over the back name, and nothing between the two may start a stacking context.** The frames keep their white background (see below), and `mix-blend-mode: multiply` is what makes that white disappear over the type. Blending only sees what is painted beneath it inside the same stacking context, so `transform`, `translate`, `opacity < 1`, or `z-index` on anything between the back name and the canvas makes multiply blend against an empty backdrop, and the white rectangle comes back. That is why `useHeroCamera` moves the portrait box with `top`, not `translate`, and why the content grid has no `z-index`.
+
+**The push zoom is capped relative to the cover zoom, not at a fixed number.** `pushZoom` goes up to 1.15 times the zoom at which the lens covers the viewport, so the cut to ink lands at the same moment for every window size. A fixed cap was tried in the prototype: 40x never covered the lens at all, and 150x overshot and spent the end of the push on solid black.
+
+**The bands cannot open inside the pin.** `#work` sits below the pinned Hero, so opening there reveals an empty Hero. The card is fixed and portalled to `body`, and its strips are driven by a second ScrollTrigger on `#work` (`top bottom` to `top 35%`).
+
+**The hi-res still swaps in at the start of the push, with `visibility`, not a fade.** It is the same pose as the sprite's last frame, located in the source by template match (best at 9.33s; crop `(83, 621)` at 1080px wide). It is rgb24 PNG so its white is exactly 255 under multiply. **Re-extracting it means re-measuring the lens** in `hero-lens-still.json`. The lens centre was set by eye and checked with a marker, because automatic darkest-pixel detection kept catching the black frame and temple arm. **Hide the still explicitly when inside the lens.** Visibility is the one hiding property a child can override, and the still's own inline `visible` once kept the zoomed lens showing beneath the opening bands.
+
+**The desktop headline is sized by height as well as width** (`min(4.2vw, 6.8svh)`), and the card titles by `min(3.3vw, 6.4svh)`. Syne is wide: the width-only headline wrapped to seven lines at 1366x768 and pushed the subline and CTA under the band. Measured clearance above the band after the change: 38px at 1280x720, 50 at 1366x768, 58 at 1440x900, 54 at 1024x768. At 800x600 the CTA still sits under the band, which is a known limit at that size.
+
+**The pinned section has no margins of its own.** Its edge-to-edge negative margins live on a wrapper div, because GSAP moves a pinned element's margins onto its pin spacer and fixes its width at the content width, which cut the band and the name a gutter short of the right edge.
+
 #### The Hero keeps its background
 
 **`matte: 'none'` is the default, and it is why this Hero finally stopped flickering.** Every matte in this module is an estimate recomputed per frame, so wherever the estimate is marginal it wobbles frame to frame, and that wobble *is* the flicker. Three separate attempts fought it with better estimates (flood fill with a shared reference, then a green screen, then tuning both). The fix was to stop estimating. The source clip `no bg 1.mp4` arrives already matted onto pure white, and the Hero now sits on a pure white page, so the background can simply be **kept**: the frame's white and the page's white are the same colour, so the rectangle has no visible edge, and the silhouette that used to shimmer is no longer a boundary between two different things. **A matte that is never computed cannot drift.**
@@ -140,9 +170,7 @@ Measured on that clip before committing to it: background exactly `255,255,255` 
 
 **The reserved box's aspect ratio comes from the baked manifest, not a fixed Tailwind class.** `HeroCutoutStage.tsx` imports `hero-cutout.json` directly (a small bundled JSON import, not a fetch, so this is known synchronously at first render) and sets `style={{ aspectRatio: frameWidth / frameHeight }}` on the wrapper. A mismatched box (the original shipped with a forced `aspect-square`, while the baked crop is never square) letterboxes under `object-fit: contain`, which is what read as the cutout "floating" with dead space above and below instead of filling its column. Matching the box to the content's real proportions removes that gap without needing to fake it any other way. **If the box ever looks like it has dead margin again, check whether its aspect ratio still matches the current manifest before touching sizing or positioning.**
 
-**The bottom edge is eased out with a CSS mask whose stops come from the manifest, not from hardcoded percentages.** The source clip's frame boundary cuts the subject off mid-chest, so every baked frame ends on a hard horizontal line running about 88% of the frame's width. The bake reports where that line falls as `bottomCutFraction`, and `HeroCutout.tsx`'s `bottomFade()` builds the gradient so it reaches full transparency *above* it.
-
-**The mask must hit zero before the cut, not merely get faint.** The previous hardcoded `black 72%, transparent 96%` was tuned against an older crop. When the crop changed, the cut landed at 94.6%, where that gradient still had 7% opacity left, and it rendered as a perfectly straight 450px line about 8 luma darker than the page. Straight lines are close to the most visible thing you can leave on a flat background, so "nearly transparent" is not good enough. Measured after deriving the stops: the biggest row-to-row luma jump in the bottom half fell from 7.9 to 2.2, and that 2.2 is ordinary image detail in the middle of the subject rather than anything at the cut, where the page reads exactly 255.
+**There is no bottom fade any more: the chest cut is covered by the role band.** The source clip cuts the subject off mid-chest, and the bake reports where as `bottomCutFraction`. It used to be hidden with a CSS mask that dissolved the bottom of the frame; the poster sequence below replaced that with an ink band, and `useHeroCamera` positions the portrait box so the cut sits 30% of the way down into the band. If you ever bring a fade back, the lesson from the old one still holds: it had to reach full transparency *above* the cut, because a straight line at even 7% opacity rendered as a visible 450px rule.
 
 Same lesson as the aspect ratio above: **anything that depends on the crop must be read from the manifest, because the crop is recomputed on every bake.**
 
