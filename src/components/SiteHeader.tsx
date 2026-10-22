@@ -33,7 +33,7 @@ export function SiteHeader() {
     // bar from type this heavy; the hairline is what stops the white bar from
     // dissolving into the white page.
     <header
-      className={`fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b px-6 py-5 transition-colors duration-300 sm:px-gutter ${
+      className={`fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b px-6 py-5 transition-colors duration-300 max-[359px]:px-4 sm:px-gutter ${
         solid ? 'border-edge bg-bg' : 'border-transparent bg-transparent'
       }`}
     >
@@ -45,13 +45,13 @@ export function SiteHeader() {
           already generous enough to cover the difference. */}
       <a
         href="#hero"
-        className="py-2 font-mono text-xs tracking-[0.18em] text-fg uppercase transition-colors hover:text-accent"
+        className="py-2 font-mono text-xs tracking-[0.18em] text-fg uppercase transition-colors hover:text-accent max-[359px]:tracking-[0.12em]"
       >
         {site.name}
       </a>
 
       <nav aria-label="Primary">
-        <ul className="flex gap-6 sm:gap-[26px]">
+        <ul className="flex gap-6 max-[359px]:gap-3.5 sm:gap-[26px]">
           {nav.map((item) => (
             <li key={item.href}>
               <a

@@ -1,8 +1,9 @@
-import { useEffect, useState, type RefObject } from 'react'
+import type { RefObject } from 'react'
 
 import cutoutManifest from '../assets/hero-cutout.json'
 import lensStillUrl from '../assets/hero-lens-still.png?url'
 import { useHeroCutout } from '../hooks/useHeroCutout'
+import { useIsCompact } from '../hooks/useIsCompact'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 import { HeroCutout } from './HeroCutout'
 
@@ -57,21 +58,13 @@ interface HeroCutoutStageProps {
  * The preloader (src/preloader/run.ts) has usually started that download
  * already; `useHeroCutout` memoises it, so this picks up the same promise.
  *
- * Hidden entirely below 768px, matching every other pinned visual on this
- * site: pinning plus a mobile browser's address-bar show/hide resize is a
+ * Hidden entirely on compact screens (narrow or short; see useIsCompact),
+ * matching every other pinned visual on this site: pinning plus a mobile browser's address-bar show/hide resize is a
  * well-known source of jank, independent of what's being pinned.
  */
 export function HeroCutoutStage({ progress, className, boxRef, stillRef }: HeroCutoutStageProps) {
   const reducedMotion = usePrefersReducedMotion()
-  const [isCompact, setIsCompact] = useState(() =>
-    window.matchMedia('(max-width: 768px)').matches,
-  )
-  useEffect(() => {
-    const mql = window.matchMedia('(max-width: 768px)')
-    const sync = () => setIsCompact(mql.matches)
-    mql.addEventListener('change', sync)
-    return () => mql.removeEventListener('change', sync)
-  }, [])
+  const isCompact = useIsCompact()
 
   if (isCompact) return null
 

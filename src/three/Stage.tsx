@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, useState, type RefObject } from 'react'
 
+import { useIsCompact } from '../hooks/useIsCompact'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 
 /**
@@ -27,25 +28,16 @@ interface StageProps {
  *    stage, wrapper included, would collapse the grid column until the chunk
  *    resolved and then push the layout sideways on arrival.
  *
- *  - Nothing is imported at all below 768px, so a phone never downloads
+ *  - Nothing is imported at all on compact screens, so a phone never downloads
  *    three.js. That is the difference between a lighter mobile experience and
  *    a desktop scene that merely renders nothing after paying for itself.
  */
 export function Stage({ progress, className }: StageProps) {
   const reducedMotion = usePrefersReducedMotion()
-  const [isCompact, setIsCompact] = useState(() =>
-    window.matchMedia('(max-width: 768px)').matches,
-  )
+  const isCompact = useIsCompact()
   // Held back until the browser is idle, so the 3D chunk never competes with
   // fonts, copy and first paint for bandwidth.
   const [mayLoad, setMayLoad] = useState(false)
-
-  useEffect(() => {
-    const mql = window.matchMedia('(max-width: 768px)')
-    const sync = () => setIsCompact(mql.matches)
-    mql.addEventListener('change', sync)
-    return () => mql.removeEventListener('change', sync)
-  }, [])
 
   useEffect(() => {
     if (isCompact) return

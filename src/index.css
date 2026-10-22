@@ -63,6 +63,12 @@
   --container-page: 1440px; /* max content width */
 }
 
+/* The poster Hero's layout: wide AND tall enough to hold a pinned,
+   full-screen poster. The exact complement of COMPACT_QUERY in
+   src/hooks/useIsCompact.ts (breakpoints.test.ts holds the two together).
+   Not `md:`, which is width alone and lets landscape phones in. */
+@custom-variant poster (@media (min-width: 768px) and (min-height: 540.02px));
+
 @layer base {
   html {
     /* Lenis owns smooth scrolling and writes scrollTop every frame. Leaving

@@ -11,11 +11,15 @@ export function SiteFooter() {
         © {new Date().getFullYear()} Shiva Gunuru
       </p>
       <nav aria-label="Legal">
+        {/* The links carry vertical padding (cancelled by an equal negative
+            margin, so the footer's height is unchanged) to give each one a
+            26px tap target. Set in 11px type they were 14px tall, well under
+            the 24px WCAG minimum. */}
         <ul className="flex gap-6">
           <li>
             <a
               href="/privacy.html"
-              className="font-mono text-[11px] tracking-[0.14em] text-faint uppercase transition-colors hover:text-accent"
+              className="-my-1.5 inline-block py-1.5 font-mono text-[11px] tracking-[0.14em] text-faint uppercase transition-colors hover:text-accent"
             >
               Privacy
             </a>
@@ -23,7 +27,7 @@ export function SiteFooter() {
           <li>
             <a
               href="/terms.html"
-              className="font-mono text-[11px] tracking-[0.14em] text-faint uppercase transition-colors hover:text-accent"
+              className="-my-1.5 inline-block py-1.5 font-mono text-[11px] tracking-[0.14em] text-faint uppercase transition-colors hover:text-accent"
             >
               Terms
             </a>
@@ -31,7 +35,7 @@ export function SiteFooter() {
           <li>
             <a
               href="/cookies.html"
-              className="font-mono text-[11px] tracking-[0.14em] text-faint uppercase transition-colors hover:text-accent"
+              className="-my-1.5 inline-block py-1.5 font-mono text-[11px] tracking-[0.14em] text-faint uppercase transition-colors hover:text-accent"
             >
               Cookies
             </a>

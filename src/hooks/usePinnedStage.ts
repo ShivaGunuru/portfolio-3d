@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, type RefObject } from 'react'
+import { useEffect, useRef, type RefObject } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
+import { useIsCompact } from './useIsCompact'
 import { usePrefersReducedMotion } from './usePrefersReducedMotion'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -30,18 +31,9 @@ export function usePinnedStage(
   { distance = 100 }: UsePinnedStageOptions = {},
 ) {
   const reducedMotion = usePrefersReducedMotion()
-  const [isCompact, setIsCompact] = useState(() =>
-    window.matchMedia('(max-width: 768px)').matches,
-  )
+  const isCompact = useIsCompact()
   const skip = reducedMotion || isCompact
   const progress = useRef(skip ? 1 : 0)
-
-  useEffect(() => {
-    const mql = window.matchMedia('(max-width: 768px)')
-    const sync = () => setIsCompact(mql.matches)
-    mql.addEventListener('change', sync)
-    return () => mql.removeEventListener('change', sync)
-  }, [])
 
   useEffect(() => {
     const el = sectionRef.current

@@ -17,9 +17,12 @@ function ProjectCard({ project, isLast }: { project: Project; isLast: boolean })
       }
     >
       <Reveal className="flex flex-col gap-[18px]" stagger={0.09}>
+        {/* Width-scaled on phones: in Syne caps "FEATURE-BENEFIT" is one
+            unbreakable 337px word at the old 30px floor, wider than a 360px
+            phone's column, and it pushed the whole card past the padding. */}
         <h3
           id={headingId}
-          className="font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.02] font-extrabold tracking-[-0.02em] uppercase"
+          className="font-display text-[clamp(1.375rem,7.4vw,1.875rem)] leading-[1.02] sm:text-[clamp(1.875rem,3.2vw,2.75rem)] font-extrabold tracking-[-0.02em] uppercase"
         >
           {project.title}
         </h3>
@@ -45,7 +48,7 @@ function ProjectCard({ project, isLast }: { project: Project; isLast: boolean })
             href={project.status.href}
             target="_blank"
             rel="noreferrer noopener"
-            className="mt-1 font-mono text-[11px] tracking-[0.14em] text-accent uppercase transition-colors hover:text-fg"
+            className="-mb-1 py-1 font-mono text-[11px] tracking-[0.14em] text-accent uppercase transition-colors hover:text-fg"
           >
             ↳ {project.status.label}
           </a>

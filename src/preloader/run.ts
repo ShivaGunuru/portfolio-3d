@@ -1,4 +1,5 @@
 import { loadHeroCutout } from '../hooks/useHeroCutout'
+import { COMPACT_QUERY } from '../hooks/useIsCompact'
 import { waitForGate } from './gate'
 
 const MIN_MS = 1200
@@ -53,10 +54,10 @@ export function startPreloader(): void {
   document.fonts.ready.then(() => el.classList.add('has-fonts'))
 
   const tasks: Promise<unknown>[] = [document.fonts.ready, windowLoaded()]
-  // Same breakpoint as HeroCutoutStage. Below it the Hero visual never
+  // Same breakpoint as HeroCutoutStage. On compact screens the Hero visual never
   // mounts, so waiting for its sprite would delay the reveal for nothing and
   // spend a phone's data on a multi-megabyte image it will never show.
-  if (!window.matchMedia('(max-width: 768px)').matches) {
+  if (!window.matchMedia(COMPACT_QUERY).matches) {
     tasks.push(loadHeroCutout())
   }
 

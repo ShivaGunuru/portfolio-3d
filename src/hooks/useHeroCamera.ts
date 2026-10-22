@@ -41,6 +41,10 @@ interface HeroCameraOptions {
 
 /** Where the chest cut sits inside the band, measured down from its top edge. */
 const CUT_IN_BAND = 0.3
+/** In the stacked (portrait) layout: clear space kept between the copy and the top of the portrait box. */
+const STACK_CLEARANCE = 24
+/** Never shrink the stacked portrait below this, however long the copy runs. */
+const STACK_MIN_WIDTH = 320
 /**
  * Drift over the whole poster phase, as a fraction of the viewport's width.
  * Three layers, three speeds, so the poster reads as depth: the name behind
@@ -106,6 +110,25 @@ export function useHeroCamera(
     const measure = () => {
       box.style.top = '0px'
       box.style.left = '0px'
+      box.style.width = ''
+
+      // Stacked layout (one grid column, on portrait screens): the portrait
+      // gets whatever height is left between the bottom of the copy and the
+      // cut line's place in the band, and its width follows from the frame's
+      // aspect ratio. CSS cannot size it, because the copy's height depends on
+      // how the headline wraps at that particular width.
+      const grid = box.parentElement
+      const text = grid?.firstElementChild as HTMLElement | null
+      const stacked = !!grid && getComputedStyle(grid).gridTemplateColumns.trim().split(/\s+/).length === 1
+      if (stacked && text) {
+        const textBottom = offsetWithin(text, camera).y + text.offsetHeight
+        const cutTarget = band.offsetTop + band.offsetHeight * CUT_IN_BAND
+        const roomH = (cutTarget - textBottom - STACK_CLEARANCE) / cutoutManifest.bottomCutFraction
+        const aspect = cutoutManifest.frameWidth / cutoutManifest.frameHeight
+        const width = Math.max(STACK_MIN_WIDTH, Math.min(box.offsetWidth, roomH * aspect))
+        box.style.width = `${width}px`
+      }
+
       const { x, y } = offsetWithin(box, camera)
       const boxW = box.offsetWidth
       const boxH = box.offsetHeight
@@ -140,6 +163,7 @@ export function useHeroCamera(
       ScrollTrigger.removeEventListener('refresh', measure)
       box.style.top = ''
       box.style.left = ''
+      box.style.width = ''
     }
 
     if (!active) return teardownLayout

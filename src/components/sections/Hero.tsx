@@ -66,17 +66,17 @@ export function Hero() {
       id="hero"
       aria-labelledby="hero-heading"
       ref={sectionRef}
-      className="relative min-h-svh overflow-hidden md:h-svh"
+      className="relative min-h-svh overflow-hidden poster:h-svh"
       style={{ '--band-h': 'clamp(5rem, 15svh, 9rem)' } as CSSProperties}
     >
       <div
         ref={cameraRef}
-        className="flex min-h-svh origin-top-left flex-col justify-center md:absolute md:inset-0 md:block md:min-h-0"
+        className="flex min-h-svh origin-top-left flex-col justify-center poster:absolute poster:inset-0 poster:block poster:min-h-0"
       >
         <div
           ref={backNameRef}
           aria-hidden="true"
-          className="pointer-events-none absolute left-0 hidden font-display text-[clamp(9rem,30svh,22rem)] leading-[0.8] font-extrabold tracking-[-0.03em] whitespace-nowrap text-poster uppercase md:block"
+          className="pointer-events-none absolute left-0 hidden font-display text-[clamp(9rem,30svh,22rem)] leading-[0.8] font-extrabold tracking-[-0.03em] whitespace-nowrap text-poster uppercase poster:block"
         >
           {site.name}
           {'   '}
@@ -84,8 +84,12 @@ export function Hero() {
         </div>
 
         {/* The grid stops at the band's top edge, so the band can never sit
-            over the headline or the call to action. */}
-        <div className="page-shell grid w-full items-center gap-16 px-6 pt-24 pb-16 sm:px-gutter md:absolute md:inset-x-0 md:top-0 md:bottom-(--band-h) md:grid-cols-[1fr_1.2fr] md:pt-20 md:pb-6">
+            over the headline or the call to action. On portrait screens
+            (tablets held upright) two columns squeezed the portrait into a
+            corner, 361px wide on an iPad Air with half the screen empty above
+            it, so there it stacks: copy on top, portrait beneath it, sized by
+            useHeroCamera to fill the room left above the band. */}
+        <div className="page-shell grid w-full items-center gap-16 px-6 pt-24 pb-16 sm:px-gutter poster:absolute poster:inset-x-0 poster:top-0 poster:bottom-(--band-h) poster:grid-cols-[1fr_1.2fr] poster:pt-20 poster:pb-6 poster:portrait:grid-cols-1 poster:portrait:content-start poster:portrait:gap-8">
           <Reveal className="flex max-w-160 flex-col gap-6 sm:gap-[26px]" stagger={0.1} delay={0.15}>
             <p className="font-mono text-xs tracking-[0.2em] text-dim uppercase">{hero.eyebrow}</p>
 
@@ -96,7 +100,7 @@ export function Hero() {
                 the call to action under the band. */}
             <h1
               id="hero-heading"
-              className="font-display text-[clamp(2.5rem,5.4vw,4.875rem)] leading-[0.98] font-extrabold tracking-[-0.025em] text-balance md:text-[clamp(2rem,min(4.2vw,6.8svh),4.25rem)]"
+              className="font-display text-[clamp(2.5rem,5.4vw,4.875rem)] leading-[0.98] font-extrabold tracking-[-0.025em] text-balance poster:text-[clamp(2rem,min(4.2vw,6.8svh),4.25rem)] poster:portrait:text-[clamp(2.25rem,6.2vw,4.25rem)]"
             >
               {hero.headline}
             </h1>
@@ -114,7 +118,7 @@ export function Hero() {
               </a>
               <a
                 href={`mailto:${site.email}`}
-                className="text-muted normal-case transition-colors hover:text-accent"
+                className="py-1 text-muted normal-case transition-colors hover:text-accent"
               >
                 {site.email}
               </a>
@@ -128,7 +132,7 @@ export function Hero() {
             progress={posterProgress}
             boxRef={boxRef}
             stillRef={stillRef}
-            className="w-full max-w-2xl justify-self-center"
+            className="w-full max-w-2xl justify-self-center poster:portrait:max-w-[46rem]"
           />
         </div>
 
@@ -137,7 +141,7 @@ export function Hero() {
         <div
           ref={bandRef}
           aria-hidden="true"
-          className="absolute bottom-0 -left-[50vw] hidden h-(--band-h) w-[200vw] items-center overflow-hidden bg-fg md:flex"
+          className="absolute bottom-0 -left-[50vw] hidden h-(--band-h) w-[200vw] items-center overflow-hidden bg-fg poster:flex"
         >
           <div
             ref={bandRunRef}
