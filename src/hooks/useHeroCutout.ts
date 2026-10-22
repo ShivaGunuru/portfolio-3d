@@ -23,6 +23,15 @@ export type HeroCutoutStatus = 'loading' | 'ready' | 'unavailable'
 // re-fetch a multi-megabyte sprite sheet.
 let cached: Promise<HeroCutoutData> | null = null
 
+/**
+ * Exported so the preloader can start the fetch before React even renders.
+ * The memoisation above means the hook then picks up the same promise
+ * rather than starting a second download.
+ */
+export function loadHeroCutout(): Promise<HeroCutoutData> {
+  return load()
+}
+
 function load(): Promise<HeroCutoutData> {
   if (!cached) {
     cached = new Promise((resolve, reject) => {

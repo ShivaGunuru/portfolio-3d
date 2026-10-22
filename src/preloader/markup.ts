@@ -1,4 +1,4 @@
-import type { Band } from './bands'
+import type { Band } from './bands.ts'
 
 /** The comment in index.html that the build swaps for the overlay. */
 export const PRELOADER_PLACEHOLDER = '<!-- preloader -->'

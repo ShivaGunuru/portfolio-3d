@@ -4,9 +4,9 @@ import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-import { projects, site } from './src/content/site'
-import { buildBands } from './src/preloader/bands'
-import { PRELOADER_PLACEHOLDER, renderPreloaderMarkup } from './src/preloader/markup'
+import { projects, site } from './src/content/site.ts'
+import { buildBands } from './src/preloader/bands.ts'
+import { PRELOADER_PLACEHOLDER, renderPreloaderMarkup } from './src/preloader/markup.ts'
 
 /**
  * Writes the preloader overlay into index.html at build (and dev-serve) time.

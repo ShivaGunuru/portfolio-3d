@@ -192,6 +192,27 @@ Files: `harmonicGeometry.ts` (seeds, parameter sets, fit scale), `harmonicShader
 
 **`reducedMotion` holds a representative form rather than animating**, via the same `still` prop pattern as the Hero cutout.
 
+### The preloader
+
+Six ink bands drift the role, the name and the four project titles (all from `site.ts`) until the page is ready, then slide off alternately and the whole site is revealed at once. It plays on every load, including cached reloads. Spec: `docs/superpowers/specs/2026-10-20-marquee-shutters-preloader-design.md`.
+
+| File | Role |
+|---|---|
+| `src/preloader/bands.ts`, `markup.ts` | Pure: content → static HTML. Run in Node at build time |
+| `vite.config.ts` `preloaderHtml()` | Replaces `<!-- preloader -->` in `index.html` with that HTML |
+| `src/preloader/gate.ts` | Pure: when to lift. Opens once every task has settled **and** 1200ms has passed, or at 6000ms regardless |
+| `src/preloader/run.ts` | DOM wiring, called from `main.tsx` before React renders. Exposes `whenRevealed()` / `isPreloading()` |
+
+**The overlay is static HTML on purpose.** A React loader cannot paint until the bundle has downloaded and run, which shows a blank page first, the exact thing being prevented. In production `index.css` is a render-blocking `<link>`, so the overlay paints styled on frame one. In dev, CSS is injected by JS, so the unstyled markup flashes briefly. That is expected, and not a bug to chase.
+
+**The gate waits for fonts, `window` `load`, and the Hero sprite (above 768px only), never the About field**, which is far below the fold and lazy by design. A rejected task counts as settled: the overlay gates the reveal, it does not validate assets. **`HeroCutoutStage` no longer defers to `requestIdleCallback`** for the same reason. The idle wait would let the Hero pop in after the reveal.
+
+**The scroll lock is `html:has(#preloader) { overflow: hidden }`, so it releases itself when the node is removed.** That only works without a layout jump because `scrollbar-gutter: stable` sits on `html`; it used to be on `body`, where it did nothing. Lenis scrolls programmatically, which `overflow: hidden` does not stop, so `useSmoothScroll` also calls `lenis.stop()` until `whenRevealed()`.
+
+**The reveal removes the node on the last band's `transitionend`, with a 1600ms fallback timer.** The fallback is not optional: transitionend never fires in a page that is not compositing (verified in the Claude browser pane, where even a bare 300ms test transition never ends). Without the fallback, the page would stay locked forever.
+
+Fonts: the band text is `opacity: 0` until `document.fonts.ready` adds `has-fonts`, so the bands never visibly swap from a fallback face.
+
 ### Shared by both
 
 **Pinning is compatible with Lenis's default configuration** (`wrapper: window`, native scrollTop, no transformed wrapper div), so ScrollTrigger's `pin: true` works with GSAP's default `pinType: 'fixed'` and needs no extra config. Confirmed by reading Lenis's source, not just its docs. `scrub: true` (not a numeric lerp) is deliberate: Lenis already smooths scroll, so a second lerp on top would compound lag.

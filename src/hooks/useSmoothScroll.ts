@@ -3,6 +3,7 @@ import Lenis from 'lenis'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
+import { isPreloading, whenRevealed } from '../preloader/run'
 import { usePrefersReducedMotion } from './usePrefersReducedMotion'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -48,10 +49,21 @@ export function useSmoothScroll(): void {
     // the pin actually releases under the real, final layout.
     document.fonts.ready.then(() => ScrollTrigger.refresh())
 
+    // Re-measure once the preloader has gone too. Nothing should move when it
+    // lifts (it is fixed, and the scrollbar gutter is reserved), but this
+    // costs one refresh and protects every pin from measuring a page that was
+    // still settling underneath the overlay.
+    let cancelled = false
+    whenRevealed().then(() => {
+      if (!cancelled) ScrollTrigger.refresh()
+    })
+
     if (reducedMotion) {
       // Native scroll. Make sure ScrollTrigger is measuring against it.
       ScrollTrigger.refresh()
-      return
+      return () => {
+        cancelled = true
+      }
     }
 
     const lenis = new Lenis({
@@ -65,6 +77,16 @@ export function useSmoothScroll(): void {
     })
 
     lenis.on('scroll', ScrollTrigger.update)
+
+    // The preloader's CSS scroll lock (overflow: hidden on html) does not stop
+    // Lenis, which scrolls programmatically: a wheel turn under the overlay
+    // would otherwise reveal the site already scrolled partway down.
+    if (isPreloading()) {
+      lenis.stop()
+      whenRevealed().then(() => {
+        if (!cancelled) lenis.start()
+      })
+    }
 
     const raf = (time: number) => {
       lenis.raf(time * 1000)
@@ -131,6 +153,7 @@ export function useSmoothScroll(): void {
     document.addEventListener('click', onAnchorClick)
 
     return () => {
+      cancelled = true
       document.removeEventListener('click', onAnchorClick)
       lenis.off('scroll', ScrollTrigger.update)
       gsap.ticker.remove(raf)
