@@ -41,8 +41,16 @@ interface HeroCameraOptions {
 
 /** Where the chest cut sits inside the band, measured down from its top edge. */
 const CUT_IN_BAND = 0.3
-/** Drift over the whole poster phase, as a fraction of the viewport's width. */
+/**
+ * Drift over the whole poster phase, as a fraction of the viewport's width.
+ * Three layers, three speeds, so the poster reads as depth: the name behind
+ * and the portrait in the middle drift left at different rates, and the band
+ * in front counters to the right. The portrait's drift is deliberately the
+ * smallest. It is what the eye is on, and much more would carry the raised
+ * hand into the headline column.
+ */
 const NAME_DRIFT = 0.16
+const PORTRAIT_DRIFT = 0.035
 const BAND_DRIFT = 0.22
 
 /** Sums offsets up the offsetParent chain. Unlike getBoundingClientRect, this
@@ -97,6 +105,7 @@ export function useHeroCamera(
     // regenerated whenever the clip is re-baked or the still re-extracted.
     const measure = () => {
       box.style.top = '0px'
+      box.style.left = '0px'
       const { x, y } = offsetWithin(box, camera)
       const boxW = box.offsetWidth
       const boxH = box.offsetHeight
@@ -130,6 +139,7 @@ export function useHeroCamera(
       ro.disconnect()
       ScrollTrigger.removeEventListener('refresh', measure)
       box.style.top = ''
+      box.style.left = ''
     }
 
     if (!active) return teardownLayout
@@ -158,11 +168,22 @@ export function useHeroCamera(
 
       write(backName, 'name', 'transform', `translateX(${-poster * NAME_DRIFT * layout.width}px)`)
       write(bandRun, 'run', 'transform', `translateX(${(poster - 1) * BAND_DRIFT * layout.width}px)`)
+      // `left`, not a transform, for the same stacking-context reason the box
+      // is placed with `top`: a transform here would break the multiply.
+      const portraitShift = -poster * PORTRAIT_DRIFT * layout.width
+      write(box, 'portrait', 'left', `${portraitShift}px`)
 
       const zoom = pushZoom(push, layout.cover)
       const inside = push > 0 && isInsideLens(zoom, layout.cover)
       if (push > 0) {
-        const { tx, ty, scale } = cameraTransform({ ...layout, zoom, push })
+        // The lens was measured with the portrait undrifted; aim at where it
+        // actually is now.
+        const { tx, ty, scale } = cameraTransform({
+          ...layout,
+          lensX: layout.lensX + portraitShift,
+          zoom,
+          push,
+        })
         write(camera, 'camera', 'transform', `translate(${tx}px, ${ty}px) scale(${scale})`)
       } else {
         write(camera, 'camera', 'transform', 'none')

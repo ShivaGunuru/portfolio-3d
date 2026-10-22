@@ -110,7 +110,7 @@ The Hero is one pinned sequence, 250% of the viewport long. Spec: `docs/superpow
 
 | Pin progress | Phase |
 |---|---|
-| 0 to 0.55 | **Poster.** Frames scrub; a giant pale `site.name` drifts left behind the head; an ink band of `site.role` drifts right over the chest cut |
+| 0 to 0.55 | **Poster.** Frames scrub. Three layers drift at three speeds: a giant pale `site.name` behind the head (16% of width, left), the portrait (3.5%, left, kept small so the raised hand stays clear of the headline), and an ink band of `site.role` over the chest cut (22%, right) |
 | 0.55 to 0.9 | **Push.** The whole Hero (text, name, portrait, band) scales into the left lens as one CSS transform |
 | 0.84 to 1 | **Inside the lens.** A fixed ink card; the four project titles rise in |
 | after the pin | **Bands.** As `#work` scrolls up behind the card, six strips slide off alternately |
@@ -122,7 +122,7 @@ The Hero is one pinned sequence, 250% of the viewport long. Spec: `docs/superpow
 | `src/components/HeroLensCard.tsx` | The ink card, portalled to `body` |
 | `src/assets/hero-lens-still.png` + `.json` | Last poster pose at source resolution, plus its lens centre |
 
-**The portrait multiplies over the back name, and nothing between the two may start a stacking context.** The frames keep their white background (see below), and `mix-blend-mode: multiply` is what makes that white disappear over the type. Blending only sees what is painted beneath it inside the same stacking context, so `transform`, `translate`, `opacity < 1`, or `z-index` on anything between the back name and the canvas makes multiply blend against an empty backdrop, and the white rectangle comes back. That is why `useHeroCamera` moves the portrait box with `top`, not `translate`, and why the content grid has no `z-index`.
+**The portrait multiplies over the back name, and nothing between the two may start a stacking context.** The frames keep their white background (see below), and `mix-blend-mode: multiply` is what makes that white disappear over the type. Blending only sees what is painted beneath it inside the same stacking context, so `transform`, `translate`, `opacity < 1`, or `z-index` on anything between the back name and the canvas makes multiply blend against an empty backdrop, and the white rectangle comes back. That is why `useHeroCamera` places and drifts the portrait box with `top` and `left`, never `translate`, and why the content grid has no `z-index`. The push aims at the lens's drifted position, not the measured one, since the drift is at its full extent when the push begins.
 
 **The push zoom is capped relative to the cover zoom, not at a fixed number.** `pushZoom` goes up to 1.15 times the zoom at which the lens covers the viewport, so the cut to ink lands at the same moment for every window size. A fixed cap was tried in the prototype: 40x never covered the lens at all, and 150x overshot and spent the end of the push on solid black.
 
