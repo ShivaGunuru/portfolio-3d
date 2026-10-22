@@ -6,6 +6,8 @@ import {
   heroPhases,
   isInsideLens,
   pushZoom,
+  stripOffset,
+  titleReveal,
 } from '../hero/heroTimeline'
 
 describe('heroPhases', () => {
@@ -45,6 +47,22 @@ describe('push zoom', () => {
   it('needs more zoom to cover a bigger viewport or a smaller lens', () => {
     expect(coverZoom(1920, 1080, 24)).toBeGreaterThan(coverZoom(1440, 900, 24))
     expect(coverZoom(1440, 900, 12)).toBeGreaterThan(coverZoom(1440, 900, 24))
+  })
+})
+
+describe('lens card', () => {
+  it('raises titles in order, all in place by the end of the phase', () => {
+    expect(titleReveal(0, 0)).toBe(0)
+    expect(titleReveal(0.3, 0)).toBeGreaterThan(titleReveal(0.3, 1))
+    for (let i = 0; i < 4; i++) expect(titleReveal(1, i)).toBe(1)
+  })
+
+  it('sends strips off alternately and fully clears every one', () => {
+    expect(stripOffset(0, 0)).toBe(-0)
+    for (let i = 0; i < 6; i++) {
+      expect(Math.abs(stripOffset(1, i))).toBeCloseTo(101)
+      expect(Math.sign(stripOffset(1, i))).toBe(i % 2 ? 1 : -1)
+    }
   })
 })
 

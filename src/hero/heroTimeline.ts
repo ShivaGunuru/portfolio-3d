@@ -74,6 +74,26 @@ export function isInsideLens(zoom: number, cover: number): boolean {
   return zoom >= cover
 }
 
+/**
+ * How far title `index` has risen into its line, 0 (hidden below) to 1
+ * (in place). Titles start 0.16 apart and each takes 0.45 of the phase, so
+ * consecutive ones overlap and the list reads as one cascade.
+ */
+export function titleReveal(titles: number, index: number): number {
+  return easeInOutCubic(seg(titles, index * 0.16, index * 0.16 + 0.45))
+}
+
+/**
+ * Horizontal offset of strip `index` as a percentage of its own width.
+ * Even strips leave to the left and odd ones to the right, each starting a
+ * little after the one above, the same move as the preloader. 101, not 100,
+ * so the strip's 1px seam cover clears the edge too.
+ */
+export function stripOffset(bands: number, index: number): number {
+  const travel = easeInOutCubic(clamp01(bands * 1.7 - index * 0.12))
+  return travel * 101 * (index % 2 ? 1 : -1)
+}
+
 export interface CameraInput {
   /** The lens point in the camera layer's own, unscaled coordinates. */
   lensX: number

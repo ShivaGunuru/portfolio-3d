@@ -22,22 +22,6 @@ interface HeroCutoutProps {
  * video does and avoids the double-exposure ghosting a crossfade produces
  * wherever the pose changed between frames.
  */
-/**
- * Builds the bottom fade from where the bake says the subject's hard edge is.
- *
- * The fade must be fully transparent by the time it reaches that line, not
- * merely faint: the cut runs about 88% of the frame's width dead straight, and
- * a straight line at even 7% opacity is one of the most visible things you can
- * put on a flat background. The ramp starts far enough above it to read as a
- * dissolve rather than as a second, softer edge.
- */
-function bottomFade(cutFraction: number) {
-  const end = Math.max(0.2, Math.min(1, cutFraction) - 0.02)
-  const start = Math.max(0, end - 0.26)
-  const pct = (n: number) => `${(n * 100).toFixed(1)}%`
-  return `linear-gradient(to bottom, black 0%, black ${pct(start)}, transparent ${pct(end)})`
-}
-
 export function HeroCutout({ data, progress, still, className }: HeroCutoutProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const lastFrame = useRef(-1)
@@ -125,24 +109,9 @@ export function HeroCutout({ data, progress, still, className }: HeroCutoutProps
     }
   }, [data, progress, still])
 
-  const fade = bottomFade(data.bottomCutFraction)
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className={className}
-      // Eases the bottom edge out instead of ending on the sharp horizontal
-      // line the source video's own frame boundary cuts the subject off at.
-      // A mask, not a second baked alpha ramp, so the bake needs to know
-      // nothing about where the canvas will eventually place the frame.
-      //
-      // The sprite is fully opaque now (see bakeHeroCutout.ts: the frames
-      // keep their own white background instead of having it matted out), so
-      // this fades the rectangle itself rather than just the subject. That
-      // works out to the same thing on screen only because the page behind it
-      // is the same white. If this Hero is ever staged on a colour, the fade
-      // will show as a gradient and this needs revisiting along with it.
-      style={{ maskImage: fade, WebkitMaskImage: fade }}
-    />
-  )
+  // No bottom fade. The hard edge where the source clip cuts the subject off
+  // mid-chest is covered by the Hero's role band instead (see useHeroCamera,
+  // which places this box so the cut sits inside the band). A fade only ever
+  // hid that edge; the band makes it part of the design.
+  return <canvas ref={canvasRef} className={className} />
 }

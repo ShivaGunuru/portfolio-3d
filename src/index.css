@@ -43,6 +43,10 @@
     the darker one of the pair. Same hue (~36 degrees), same role, darkened
     until it clears AA again. 5.43:1 against white. */
   --color-edge: #cacacb; /* hairline dividers, tag borders. Nike hairline */
+  --color-poster: #e7e4df; /* the Hero's giant back name. A surface, not text:
+    it is aria-hidden decoration, and it has to stay this pale because the
+    portrait multiplies over it, so anything darker would muddy the face. A
+    touch warm, so it reads as print rather than as a disabled grey. */
 
   /* 3D. Starting points for the About field against the new light background.
      Both are tuned by rendering in Task 8, not fixed by this comment. */
