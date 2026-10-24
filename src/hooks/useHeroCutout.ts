@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import manifest from '../assets/hero-cutout.json'
 // `?url` gives the hashed, cacheable asset URL rather than inlining a
 // multi-megabyte sprite sheet into a JS chunk.
-import spriteUrl from '../assets/hero-cutout.png?url'
+import spriteUrl from '../assets/hero-cutout.webp?url'
 
 export interface HeroCutoutData {
   image: HTMLImageElement

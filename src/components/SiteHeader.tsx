@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { nav, site } from '../content/site'
 
@@ -12,19 +12,35 @@ const SOLID_AFTER_PX = 40
 
 export function SiteHeader() {
   const [solid, setSolid] = useState(false)
+  const sentinelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // Lenis drives native window scroll rather than transforming a wrapper, so
-    // a plain scroll listener sees every position it produces.
-    const onScroll = () => setSolid(window.scrollY > SOLID_AFTER_PX)
-    // Run once up front: a reload partway down the page (or a link straight to
-    // #work) must start solid, not transparent over content.
-    onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+    // An observer on a strip covering the first SOLID_AFTER_PX of the page,
+    // not a scroll listener. The listener ran on every scroll event, read
+    // window.scrollY (forcing a layout whenever styles were dirty, which
+    // during the Hero sequence is every frame) and handed React a state
+    // update each time: measured at about 9% of the main thread over a
+    // throttled scroll through the Hero, to answer one yes/no question. The
+    // observer is told only when the strip crosses the top of the viewport.
+    // Its first callback fires on observe, so a reload partway down the page
+    // (or a link straight to #work) still starts solid.
+    const io = new IntersectionObserver(([entry]) => setSolid(!entry.isIntersecting))
+    io.observe(sentinel)
+    return () => io.disconnect()
   }, [])
 
   return (
+    <>
+    {/* Absolutely positioned against the document, so it scrolls with the
+        page while the header stays fixed. */}
+    <div
+      ref={sentinelRef}
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-x-0 top-0"
+      style={{ height: SOLID_AFTER_PX }}
+    />
     // The background is opaque once scrolled, and there is no backdrop-blur.
     // Blur was what this used while the page was near-black, where smearing
     // dark violet under a dark header was invisible. Against white it turned
@@ -65,5 +81,6 @@ export function SiteHeader() {
         </ul>
       </nav>
     </header>
+    </>
   )
 }

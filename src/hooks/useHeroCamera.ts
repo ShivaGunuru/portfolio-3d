@@ -109,7 +109,6 @@ export function useHeroCamera(
     // regenerated whenever the clip is re-baked or the still re-extracted.
     const measure = () => {
       box.style.top = '0px'
-      box.style.left = '0px'
       box.style.width = ''
 
       // Stacked layout (one grid column, on portrait screens): the portrait
@@ -162,7 +161,7 @@ export function useHeroCamera(
       ro.disconnect()
       ScrollTrigger.removeEventListener('refresh', measure)
       box.style.top = ''
-      box.style.left = ''
+      box.style.transform = ''
       box.style.width = ''
     }
 
@@ -185,6 +184,7 @@ export function useHeroCamera(
     const titles = card ? [...card.querySelectorAll<HTMLElement>('[data-lens-title]')] : []
     const titlesPerStrip = strips.length ? titles.length / strips.length : 0
 
+    let canvas: HTMLCanvasElement | null = null
     let raf = 0
     const frame = () => {
       const { poster, push, titles: titlePhase } = heroPhases(progress.current ?? 0)
@@ -192,10 +192,12 @@ export function useHeroCamera(
 
       write(backName, 'name', 'transform', `translateX(${-poster * NAME_DRIFT * layout.width}px)`)
       write(bandRun, 'run', 'transform', `translateX(${(poster - 1) * BAND_DRIFT * layout.width}px)`)
-      // `left`, not a transform, for the same stacking-context reason the box
-      // is placed with `top`: a transform here would break the multiply.
+      // A transform, so the drift is compositor-only: `left` would re-run
+      // layout every frame. Safe now that the portrait is a real cut-out;
+      // under the old multiply blend a transform here started a stacking
+      // context and broke the blend.
       const portraitShift = -poster * PORTRAIT_DRIFT * layout.width
-      write(box, 'portrait', 'left', `${portraitShift}px`)
+      write(box, 'portrait', 'transform', `translate3d(${portraitShift}px, 0, 0)`)
 
       const zoom = pushZoom(push, layout.cover)
       const inside = push > 0 && isInsideLens(zoom, layout.cover)
@@ -221,6 +223,14 @@ export function useHeroCamera(
       // and the still's own inline `visible` kept the zoomed lens on screen
       // underneath the opening bands.
       write(still, 'still', 'visibility', push > 0 && !inside ? 'visible' : 'hidden')
+      // The still REPLACES the frame canvas; it must never sit on top of it.
+      // Both used to be visible at once under a multiply blend, which
+      // multiplied the image by itself (every colour value squared: a 160
+      // skin tone came out near 100). That was the face going dark as the
+      // zoom began. The canvas mounts once the sprite loads, so look it up
+      // lazily.
+      canvas ??= box.querySelector('canvas')
+      write(canvas, 'canvasVis', 'visibility', push > 0 ? 'hidden' : 'visible')
       write(camera, 'cameraVis', 'visibility', inside ? 'hidden' : 'visible')
 
       const bands = bandsTrigger ? bandsTrigger.progress : 1
@@ -247,6 +257,7 @@ export function useHeroCamera(
       camera.style.transform = ''
       camera.style.visibility = ''
       if (still) still.style.visibility = ''
+      if (canvas) canvas.style.visibility = ''
       if (card) card.style.visibility = ''
     }
     // Deliberately only these two. Hero builds a new `refs` wrapper object on

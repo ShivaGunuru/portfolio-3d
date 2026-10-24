@@ -110,16 +110,15 @@ ffmpeg -i "path/to/source.mp4" -vf fps=&lt;FPS&gt; public/_bake-frames/frame%03d
     <canvas id="preview"></canvas>
 
     <p style="margin-top: 24px; opacity: 0.7">
-      <strong>3.</strong> Move both downloaded files into
-      <code>src/assets/</code>, overwriting the existing pair. On the
-      <code>none</code> path every pixel is opaque, so the canvas' RGBA PNG
-      carries a constant alpha channel worth about 1.6 MB of nothing: run
-      <code>ffmpeg -i hero-cutout.png -pix_fmt rgb24 -compression_level 100
-      out.png</code> over it and keep the result. That re-encode is bit-exact
-      on the colour channels (verified), and it also drops the colour-profile
-      chunks, which is what guarantees the browser decodes the background to
-      exactly 255,255,255 rather than colour-managing it a level or two off.
-      Delete
+      <strong>3.</strong> The frames are cut out (transparent background,
+      from <code>src/dev/grade-to-white.py</code>), and the <code>none</code>
+      path keeps their alpha, so <strong>do not</strong> re-encode to rgb24:
+      that would throw the alpha away and bring back an opaque white box.
+      Convert the downloaded PNG to WebP with lossless alpha instead, e.g. in
+      Python: <code>Image.open('hero-cutout.png').save('hero-cutout.webp',
+      quality=92, method=6, exact=True)</code>, and put it and the json in
+      <code>src/assets/</code>. Lossy colour is safe now that there is no
+      white background for it to nudge off 255. Delete
       <code>public/_bake-frames/</code> before committing; it's scratch input,
       not a shipped asset. Then re-run <code>npm run build</code> and check the
       result before pushing &mdash; a bad bake is a rendering regression, not a

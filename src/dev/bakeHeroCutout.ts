@@ -365,11 +365,16 @@ export async function bakeHeroCutout({
       const data = workCtx.getImageData(0, 0, w, h)
       frameData[f] = data
 
+      // Transparent counts as background too. Frames cut out by
+      // grade-to-white.py arrive with real alpha, and a canvas stores
+      // premultiplied pixels, so a fully transparent pixel reads back as
+      // black: judged on colour alone, the whole background would look like
+      // subject and the crop window would swallow the frame.
       const mask = new Uint8Array(w * h)
       for (let i = 0; i < w * h; i++) {
         const p = i * 4
         const min = Math.min(data.data[p], data.data[p + 1], data.data[p + 2])
-        mask[i] = min >= whiteBound ? 1 : 0
+        mask[i] = data.data[p + 3] < 128 || min >= whiteBound ? 1 : 0
       }
       frameMasks[f] = mask
       onProgress?.(f + 1, frameCount)
@@ -536,9 +541,11 @@ export async function bakeHeroCutout({
     // falloff across each edge. Eroding and blurring it would only throw that
     // away and re-approximate it, so those steps belong to the flood-fill
     // path, which starts from a hard mask and has no better option.
-    // A null alpha means "write this frame opaque". On the `none` path the
-    // frame's own background is doing the hiding, so punching it out would be
-    // undoing the very thing that makes that path stable.
+    // A null alpha means "keep the frame's own alpha". On the `none` path
+    // nothing is keyed here: an opaque source stays opaque, and a source
+    // already cut out offline (grade-to-white.py) keeps exactly the alpha it
+    // arrived with. Keying it again would be undoing the very thing that
+    // makes that path stable.
     const keyed = frameAlphas[f]
     const alpha =
       matte === 'none'
@@ -555,7 +562,7 @@ export async function bakeHeroCutout({
         cell.data[di] = src.data[si]
         cell.data[di + 1] = src.data[si + 1]
         cell.data[di + 2] = src.data[si + 2]
-        cell.data[di + 3] = alpha === null ? 255 : Math.round(alpha[sy * w + sx] * 255)
+        cell.data[di + 3] = alpha === null ? src.data[si + 3] : Math.round(alpha[sy * w + sx] * 255)
       }
     }
     cellCtx.putImageData(cell, 0, 0)

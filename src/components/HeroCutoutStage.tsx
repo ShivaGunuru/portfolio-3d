@@ -1,7 +1,7 @@
 import type { RefObject } from 'react'
 
 import cutoutManifest from '../assets/hero-cutout.json'
-import lensStillUrl from '../assets/hero-lens-still.png?url'
+import lensStillUrl from '../assets/hero-lens-still.webp?url'
 import { useHeroCutout } from '../hooks/useHeroCutout'
 import { useIsCompact } from '../hooks/useIsCompact'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
@@ -36,7 +36,7 @@ function HeroCutoutLoader({ progress, still }: LoaderProps) {
           data={data}
           progress={progress}
           still={still}
-          className="h-full w-full mix-blend-multiply"
+          className="h-full w-full"
         />
       )}
     </>
@@ -59,8 +59,14 @@ interface HeroCutoutStageProps {
  * already; `useHeroCutout` memoises it, so this picks up the same promise.
  *
  * Hidden entirely on compact screens (narrow or short; see useIsCompact),
- * matching every other pinned visual on this site: pinning plus a mobile browser's address-bar show/hide resize is a
- * well-known source of jank, independent of what's being pinned.
+ * matching every other pinned visual on this site: pinning plus a mobile
+ * browser's address-bar show/hide resize is a well-known source of jank,
+ * independent of what's being pinned.
+ *
+ * The portrait is a true cut-out (transparent background, see
+ * src/dev/grade-to-white.py) drawn with ordinary blending over the giant
+ * back name. It used to rely on a blend mode to hide a white background,
+ * which darkened the face wherever the name sat behind it.
  */
 export function HeroCutoutStage({ progress, className, boxRef, stillRef }: HeroCutoutStageProps) {
   const reducedMotion = usePrefersReducedMotion()
@@ -73,11 +79,8 @@ export function HeroCutoutStage({ progress, className, boxRef, stillRef }: HeroC
   // but the preloader now hides first paint and starts this same download
   // itself (run.ts). Waiting for idle here would let the Hero pop in after
   // the reveal, the one thing the preloader exists to prevent.
-  // `relative`, never a transform: useHeroCamera moves this box with `top`.
-  // A transform (or translate, or z-index) here would start a new stacking
-  // context, and multiply would then blend against that context's empty
-  // backdrop instead of the back name behind it, bringing the frames' white
-  // rectangle straight back.
+  // useHeroCamera places this box with `top` (static, once per measure) and
+  // drifts it with a transform (every frame, compositor-only).
   return (
     <div
       ref={boxRef}
@@ -86,17 +89,16 @@ export function HeroCutoutStage({ progress, className, boxRef, stillRef }: HeroC
       aria-hidden="true"
     >
       <HeroCutoutLoader progress={progress} still={reducedMotion} />
-      {/* The last poster frame at the source's own resolution, about twice
-          the sprite's, so the lens holds up deeper into the push. Swapped in
-          with visibility, not faded: it is the same pose as the canvas's
-          final frame, so the swap is invisible. Its white background is pure
-          255 (rgb24 PNG, like the sprite), which multiply needs. */}
+      {/* The last poster frame at the source's own resolution, so the lens
+          holds up deeper into the push. It REPLACES the canvas for the push
+          (useHeroCamera hides one as it shows the other), never sits on top
+          of it: same pose, so the swap is invisible. */}
       <img
         ref={stillRef}
         src={lensStillUrl}
         alt=""
         decoding="async"
-        className="invisible absolute inset-0 h-full w-full mix-blend-multiply"
+        className="invisible absolute inset-0 h-full w-full"
       />
     </div>
   )
