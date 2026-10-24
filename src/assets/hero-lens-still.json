@@ -2,6 +2,10 @@
   "width": 949,
   "height": 709,
   "source": "new(argon).mp4",
-  "sourceTime": 9.72,
-  "lens": { "x": 0.5975, "y": 0.3681, "r": 0.0423 }
+  "sourceTime": 9.9,
+  "lens": {
+    "x": 0.5985,
+    "y": 0.3653,
+    "r": 0.0423
+  }
 }

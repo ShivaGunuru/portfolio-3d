@@ -53,6 +53,22 @@ const STACK_MIN_WIDTH = 320
  * smallest. It is what the eye is on, and much more would carry the raised
  * hand into the headline column.
  */
+/**
+ * The camera layer is promoted to its own GPU layer (will-change: transform)
+ * only while its zoom is below this.
+ *
+ * Promotion fixes the early push: unpromoted, the whole Hero, every glyph of
+ * the giant name included, re-rasterises at a new size each frame, and that
+ * dropped 0-4 frames per pass at about 1.3-1.6x. But a promoted layer keeps
+ * the raster scale it had when (re)promoted. Promoted for the whole push, it
+ * reappeared on the way back up at ~40x, was rasterised at that scale, and
+ * kept it: every scroll after that dropped 40+ frames per pass through the
+ * Hero until Chrome re-rasterised during idle. Measured: 40 drops with
+ * permanent promotion on that path, 4 without. Promoting only at low zoom
+ * keeps the first fix and caps the raster scale the second one can get stuck
+ * at.
+ */
+const PROMOTE_MAX_ZOOM = 2.5
 const NAME_DRIFT = 0.16
 const PORTRAIT_DRIFT = 0.035
 const BAND_DRIFT = 0.22
@@ -185,6 +201,34 @@ export function useHeroCamera(
     const titlesPerStrip = strips.length ? titles.length / strips.length : 0
 
     let canvas: HTMLCanvasElement | null = null
+
+    // The still may only replace the canvas once it is DECODED. It sits
+    // hidden until the push, and a browser does not decode a hidden image
+    // until it first has to paint it, so the first push after every reload
+    // swapped the canvas out for an image that was not ready: measured, the
+    // page froze for ~700ms right there with nothing drawn. That was the
+    // character vanishing at one point and only on the first scroll. Decode
+    // ahead of time, gate the swap on it, and keep the canvas on screen until
+    // then. The decode is re-requested on every approach, because the browser
+    // may discard a decoded image again while the Hero is off screen;
+    // decode() on an image that is still decoded resolves at once.
+    let stillReady = false
+    let decoding = false
+    const ensureStillDecoded = () => {
+      if (!still || stillReady || decoding) return
+      decoding = true
+      still
+        .decode()
+        .then(() => {
+          stillReady = true
+        })
+        .catch(() => {})
+        .finally(() => {
+          decoding = false
+        })
+    }
+    ensureStillDecoded()
+
     let raf = 0
     const frame = () => {
       const { poster, push, titles: titlePhase } = heroPhases(progress.current ?? 0)
@@ -214,6 +258,7 @@ export function useHeroCamera(
       } else {
         write(camera, 'camera', 'transform', 'none')
       }
+      write(camera, 'cameraLayer', 'will-change', zoom < PROMOTE_MAX_ZOOM ? 'transform' : 'auto')
       // Hard swaps, never fades: the still replaces the canvas the moment the
       // push starts (same pose, so the swap is invisible), and the whole
       // camera layer drops out once the lens covers the screen.
@@ -222,7 +267,12 @@ export function useHeroCamera(
       // `hidden`: visibility is the one hiding property a child can override,
       // and the still's own inline `visible` kept the zoomed lens on screen
       // underneath the opening bands.
-      write(still, 'still', 'visibility', push > 0 && !inside ? 'visible' : 'hidden')
+      // Far from the push, assume the browser may have discarded the decode;
+      // nearing it, make sure it is back before the swap needs it.
+      if (poster < 0.3) stillReady = false
+      else if (poster > 0.5) ensureStillDecoded()
+      const showStill = push > 0 && !inside && stillReady
+      write(still, 'still', 'visibility', showStill ? 'visible' : 'hidden')
       // The still REPLACES the frame canvas; it must never sit on top of it.
       // Both used to be visible at once under a multiply blend, which
       // multiplied the image by itself (every colour value squared: a 160
@@ -230,12 +280,19 @@ export function useHeroCamera(
       // zoom began. The canvas mounts once the sprite loads, so look it up
       // lazily.
       canvas ??= box.querySelector('canvas')
-      write(canvas, 'canvasVis', 'visibility', push > 0 ? 'hidden' : 'visible')
+      write(canvas, 'canvasVis', 'visibility', showStill || inside ? 'hidden' : 'visible')
       write(camera, 'cameraVis', 'visibility', inside ? 'hidden' : 'visible')
 
       const bands = bandsTrigger ? bandsTrigger.progress : 1
       const cardOn = inside && bands < 1
-      write(card, 'card', 'visibility', cardOn ? 'visible' : 'hidden')
+      // display, not visibility. A visibility-hidden card stays in rendering,
+      // and once its 6 strips and 24 title copies have been animated, Chrome
+      // keeps each as its own composited layer for a while. Measured: after
+      // scrolling back up through the card, every scrollTo Lenis made cost
+      // enough to drop 40-47 frames per pass through the Hero, even sitting at
+      // the top; with the card out of rendering, 1. display: none removes it,
+      // layers and all, whenever it is not on screen.
+      write(card, 'card', 'display', cardOn ? 'block' : 'none')
       if (cardOn) {
         titles.forEach((el, i) => {
           const rise = titleReveal(titlePhase, i % titlesPerStrip)
@@ -255,10 +312,11 @@ export function useHeroCamera(
       bandsTrigger?.kill()
       teardownLayout()
       camera.style.transform = ''
+      camera.style.willChange = ''
       camera.style.visibility = ''
       if (still) still.style.visibility = ''
       if (canvas) canvas.style.visibility = ''
-      if (card) card.style.visibility = ''
+      if (card) card.style.display = ''
     }
     // Deliberately only these two. Hero builds a new `refs` wrapper object on
     // every render, so listing it would tear this down and rebuild it on any

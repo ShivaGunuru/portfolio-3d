@@ -33,7 +33,7 @@ export function HeroCutout({ data, progress, still, className }: HeroCutoutProps
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const { image, frameCount, columns, frameWidth, frameHeight } = data
+    const { image, frames, frameCount, columns, frameWidth, frameHeight } = data
     const aspect = frameWidth / frameHeight
 
     let displayWidth = 0
@@ -72,22 +72,17 @@ export function HeroCutout({ data, progress, still, className }: HeroCutoutProps
       const dx = (displayWidth - drawW) / 2
       const dy = (displayHeight - drawH) / 2
 
-      const col = frameIndex % columns
-      const row = Math.floor(frameIndex / columns)
-
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, displayWidth, displayHeight)
-      ctx.drawImage(
-        image,
-        col * frameWidth,
-        row * frameHeight,
-        frameWidth,
-        frameHeight,
-        dx,
-        dy,
-        drawW,
-        drawH,
-      )
+      // Per-frame bitmaps keep each draw's texture small; see useHeroCutout.
+      const frame = frames?.[frameIndex]
+      if (frame) {
+        ctx.drawImage(frame, dx, dy, drawW, drawH)
+      } else {
+        const col = frameIndex % columns
+        const row = Math.floor(frameIndex / columns)
+        ctx.drawImage(image, col * frameWidth, row * frameHeight, frameWidth, frameHeight, dx, dy, drawW, drawH)
+      }
     }
 
     const tick = () => {

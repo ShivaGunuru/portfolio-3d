@@ -67,16 +67,11 @@ export function Hero() {
       className="relative min-h-svh overflow-hidden poster:h-svh"
       style={{ '--band-h': 'clamp(5rem, 15svh, 9rem)' } as CSSProperties}
     >
-      {/* Its own GPU layer in the poster layout (will-change), so the camera
-          push is scaled by the compositor instead of re-rasterising the whole
-          Hero, every glyph of the giant name included, at a new size each
-          frame. Measured over a scroll through the sequence: 0-4 dropped
-          frames per run without it, all early in the push, and 0 in every run
-          with it, at identical sharpness (the zoom is limited by the still's
-          own resolution, not by the layer). */}
+      {/* GPU promotion (will-change) for this layer is set per frame by
+          useHeroCamera, only while the zoom is modest: see PROMOTE_MAX_ZOOM. */}
       <div
         ref={cameraRef}
-        className="flex min-h-svh origin-top-left flex-col justify-center poster:absolute poster:inset-0 poster:block poster:min-h-0 poster:will-change-transform"
+        className="flex min-h-svh origin-top-left flex-col justify-center poster:absolute poster:inset-0 poster:block poster:min-h-0"
       >
         <div
           ref={backNameRef}

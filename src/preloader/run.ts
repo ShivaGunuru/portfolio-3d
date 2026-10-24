@@ -1,3 +1,4 @@
+import lensStillUrl from '../assets/hero-lens-still.webp?url'
 import { loadHeroCutout } from '../hooks/useHeroCutout'
 import { COMPACT_QUERY } from '../hooks/useIsCompact'
 import { waitForGate } from './gate'
@@ -59,6 +60,12 @@ export function startPreloader(): void {
   // spend a phone's data on a multi-megabyte image it will never show.
   if (!window.matchMedia(COMPACT_QUERY).matches) {
     tasks.push(loadHeroCutout())
+    // The zoom's hi-res still, fetched and decoded before the reveal, so the
+    // first push after a reload never waits on it (useHeroCamera still gates
+    // the swap on its own decode, in case the browser discards this one).
+    const still = new Image()
+    still.src = lensStillUrl
+    tasks.push(still.decode())
   }
 
   revealed = waitForGate(tasks, {

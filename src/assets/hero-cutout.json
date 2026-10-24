@@ -1,7 +1,7 @@
 {
-  "frameCount": 36,
-  "columns": 6,
-  "rows": 6,
+  "frameCount": 96,
+  "columns": 10,
+  "rows": 10,
   "frameWidth": 593,
   "frameHeight": 443,
   "bottomCutFraction": 1

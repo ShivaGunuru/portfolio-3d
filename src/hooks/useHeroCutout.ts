@@ -6,7 +6,10 @@ import manifest from '../assets/hero-cutout.json'
 import spriteUrl from '../assets/hero-cutout.webp?url'
 
 export interface HeroCutoutData {
+  /** The whole sheet; drawn from only when per-frame bitmaps are unavailable. */
   image: HTMLImageElement
+  /** One decoded bitmap per frame, sliced once at load: see load(). */
+  frames: ImageBitmap[] | null
   frameCount: number
   columns: number
   rows: number
@@ -36,9 +39,39 @@ function load(): Promise<HeroCutoutData> {
   if (!cached) {
     cached = new Promise((resolve, reject) => {
       const img = new Image()
-      img.onload = () =>
+      img.onload = async () => {
+        // Slice the sheet into one ImageBitmap per frame, once, and keep them.
+        // Two failures this avoids, both measured:
+        //  - Drawn straight from the <img>, the browser may discard the
+        //    sheet's decoded pixels while the Hero is off screen and re-decode
+        //    all of it mid-scroll on the way back up.
+        //  - Drawn from ONE bitmap of the whole sheet, every frame needs the
+        //    entire sheet as a GPU texture. At 96 frames that is ~26
+        //    megapixels (~105 MB), more than the GPU image cache keeps, so it
+        //    was re-uploaded on every draw: 52 of 64 frames dropped. A frame
+        //    bitmap is ~1 MB, so even an evicted one re-uploads in well under
+        //    a millisecond.
+        // Bitmaps stay decoded while referenced. Falls back to drawing from
+        // the sheet where createImageBitmap is unavailable.
+        let frames: ImageBitmap[] | null = null
+        try {
+          frames = await Promise.all(
+            Array.from({ length: manifest.frameCount }, (_, i) =>
+              createImageBitmap(
+                img,
+                (i % manifest.columns) * manifest.frameWidth,
+                Math.floor(i / manifest.columns) * manifest.frameHeight,
+                manifest.frameWidth,
+                manifest.frameHeight,
+              ),
+            ),
+          )
+        } catch {
+          frames = null
+        }
         resolve({
           image: img,
+          frames,
           frameCount: manifest.frameCount,
           columns: manifest.columns,
           rows: manifest.rows,
@@ -46,6 +79,7 @@ function load(): Promise<HeroCutoutData> {
           frameHeight: manifest.frameHeight,
           bottomCutFraction: manifest.bottomCutFraction,
         })
+      }
       img.onerror = () => reject(new Error(`useHeroCutout: failed to load ${spriteUrl}`))
       img.src = spriteUrl
     })

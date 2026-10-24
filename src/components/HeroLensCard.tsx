@@ -50,7 +50,7 @@ function Card() {
  */
 export function HeroLensCard({ cardRef }: { cardRef: RefObject<HTMLDivElement | null> }) {
   return createPortal(
-    <div ref={cardRef} aria-hidden="true" className="pointer-events-none invisible fixed inset-0 z-40">
+    <div ref={cardRef} aria-hidden="true" className="pointer-events-none fixed inset-0 z-40 hidden">
       {Array.from({ length: STRIPS }, (_, i) => (
         <div
           key={i}
