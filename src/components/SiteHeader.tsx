@@ -41,13 +41,13 @@ export function SiteHeader() {
       className="pointer-events-none absolute inset-x-0 top-0"
       style={{ height: SOLID_AFTER_PX }}
     />
-    // The background is opaque once scrolled, and there is no backdrop-blur.
-    // Blur was what this used while the page was near-black, where smearing
-    // dark violet under a dark header was invisible. Against white it turned
-    // the display type passing underneath into grey mush directly behind the
-    // wordmark. Opaque is the only treatment that reliably separates a fixed
-    // bar from type this heavy; the hairline is what stops the white bar from
-    // dissolving into the white page.
+    {/* The background is opaque once scrolled, and there is no backdrop-blur.
+        Blur was what this used while the page was near-black, where smearing
+        dark violet under a dark header was invisible. Against white it turned
+        the display type passing underneath into grey mush directly behind the
+        wordmark. Opaque is the only treatment that reliably separates a fixed
+        bar from type this heavy; the hairline is what stops the white bar from
+        dissolving into the white page. */}
     <header
       className={`fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b px-6 py-5 transition-colors duration-300 max-[359px]:px-4 sm:px-gutter ${
         solid ? 'border-edge bg-bg' : 'border-transparent bg-transparent'
