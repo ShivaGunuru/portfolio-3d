@@ -42,9 +42,9 @@ interface HeroCameraOptions {
 /** Where the chest cut sits inside the band, measured down from its top edge. */
 const CUT_IN_BAND = 0.3
 /** In the stacked (portrait) layout: clear space kept between the copy and the top of the portrait box. */
-const STACK_CLEARANCE = 24
+const STACK_CLEARANCE = 8
 /** Never shrink the stacked portrait below this, however long the copy runs. */
-const STACK_MIN_WIDTH = 320
+const STACK_MIN_WIDTH = 240
 /**
  * Drift over the whole poster phase, as a fraction of the viewport's width.
  * Three layers, three speeds, so the poster reads as depth: the name behind

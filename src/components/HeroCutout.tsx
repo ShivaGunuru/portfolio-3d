@@ -42,7 +42,9 @@ export function HeroCutout({ data, progress, still, className }: HeroCutoutProps
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect()
-      dpr = Math.min(window.devicePixelRatio || 1, 2)
+      // Never more canvas pixels than the frame has: on a phone (390px wide at
+      // 3x) they would hold no extra detail, only memory and fill cost.
+      dpr = Math.min(window.devicePixelRatio || 1, 2, Math.max(1, frameWidth / Math.max(1, rect.width)))
       displayWidth = rect.width
       displayHeight = rect.height
       canvas.width = Math.max(1, Math.round(displayWidth * dpr))
@@ -78,7 +80,7 @@ export function HeroCutout({ data, progress, still, className }: HeroCutoutProps
       const frame = frames?.[frameIndex]
       if (frame) {
         ctx.drawImage(frame, dx, dy, drawW, drawH)
-      } else {
+      } else if (image) {
         const col = frameIndex % columns
         const row = Math.floor(frameIndex / columns)
         ctx.drawImage(image, col * frameWidth, row * frameHeight, frameWidth, frameHeight, dx, dy, drawW, drawH)

@@ -25,7 +25,7 @@ const BAND_RUN = Array.from({ length: 14 }, () => `${site.role} ${marquee.separa
  */
 export function Hero() {
   const sectionRef = useRef<HTMLElement>(null)
-  const progress = usePinnedStage(sectionRef, { distance: HERO_PIN_DISTANCE })
+  const progress = usePinnedStage(sectionRef, { distance: HERO_PIN_DISTANCE, phone: 'sticky' })
   const posterProgress = useRef(0)
   const reducedMotion = usePrefersReducedMotion()
   const compact = useIsCompact()
@@ -59,13 +59,22 @@ export function Hero() {
     // GSAP moves a pinned element's margins onto its pin spacer and fixes its
     // width at the content width, which silently cut both layers off a
     // gutter short of the right edge.
-    <div className="-mx-6 sm:-mx-gutter">
+    //
+    // On an upright phone this wrapper is also the tall track the section
+    // sticks inside (see usePinnedStage). The section there is 100lvh, the size
+    // of the screen with the address bar gone, so nothing resizes as the bar
+    // moves. While the bar is showing it covers the section's bottom --bar
+    // pixels, which is why the band grows by --bar: its ink runs on underneath
+    // the bar, with its text in the part above it.
+    <div
+      className="-mx-6 sm:-mx-gutter poster:max-md:motion-safe:h-[calc(100lvh+var(--pin))]"
+      style={{ '--pin': `${HERO_PIN_DISTANCE}svh` } as CSSProperties}
+    >
     <section
       id="hero"
       aria-labelledby="hero-heading"
       ref={sectionRef}
-      className="relative min-h-svh overflow-hidden poster:h-svh"
-      style={{ '--band-h': 'clamp(5rem, 15svh, 9rem)' } as CSSProperties}
+      className="relative min-h-svh overflow-hidden [--band-h:clamp(5rem,15svh,9rem)] [--bar:0px] poster:h-svh poster:max-md:sticky poster:max-md:top-0 poster:max-md:h-lvh poster:max-md:[--band-h:clamp(3.75rem,10svh,5.5rem)] poster:max-md:[--bar:calc(100lvh-100svh)]"
     >
       {/* GPU promotion (will-change) for this layer is set per frame by
           useHeroCamera, only while the zoom is modest: see PROMOTE_MAX_ZOOM. */}
@@ -89,8 +98,8 @@ export function Hero() {
             corner, 361px wide on an iPad Air with half the screen empty above
             it, so there it stacks: copy on top, portrait beneath it, sized by
             useHeroCamera to fill the room left above the band. */}
-        <div className="page-shell grid w-full items-center gap-16 px-6 pt-24 pb-16 sm:px-gutter poster:absolute poster:inset-x-0 poster:top-0 poster:bottom-(--band-h) poster:grid-cols-[1fr_1.2fr] poster:pt-20 poster:pb-6 poster:portrait:grid-cols-1 poster:portrait:content-start poster:portrait:gap-8">
-          <Reveal className="flex max-w-160 flex-col gap-6 sm:gap-[26px]" stagger={0.1} delay={0.15}>
+        <div className="page-shell grid w-full items-center gap-16 px-6 pt-24 pb-16 sm:px-gutter poster:absolute poster:inset-x-0 poster:top-0 poster:bottom-[calc(var(--band-h)+var(--bar))] poster:grid-cols-[1fr_1.2fr] poster:pt-20 poster:pb-6 poster:portrait:grid-cols-1 poster:portrait:content-start poster:portrait:gap-8 poster:max-md:gap-3 poster:max-md:pt-[4.5rem] poster:max-md:pb-0">
+          <Reveal className="flex max-w-160 flex-col gap-6 sm:gap-[26px] poster:max-md:gap-3" stagger={0.1} delay={0.15}>
             <p className="font-mono text-xs tracking-[0.2em] text-dim uppercase">{hero.eyebrow}</p>
 
             {/* On desktop the headline is sized by viewport height as well as
@@ -100,25 +109,25 @@ export function Hero() {
                 the call to action under the band. */}
             <h1
               id="hero-heading"
-              className="font-display text-[clamp(2.5rem,5.4vw,4.875rem)] leading-[0.98] font-extrabold tracking-[-0.025em] text-balance poster:text-[clamp(2rem,min(4.2vw,6.8svh),4.25rem)] poster:portrait:text-[clamp(2.25rem,6.2vw,4.25rem)]"
+              className="font-display text-[clamp(2.5rem,5.4vw,4.875rem)] leading-[0.98] font-extrabold tracking-[-0.025em] text-balance poster:min-md:text-[clamp(2rem,min(4.2vw,6.8svh),4.25rem)] poster:min-md:portrait:text-[clamp(2.25rem,6.2vw,4.25rem)] poster:max-md:text-[clamp(1.625rem,min(8.4vw,4svh),2.75rem)]"
             >
               {hero.headline}
             </h1>
 
-            <p className="max-w-130 text-lg leading-relaxed font-light text-muted text-pretty sm:text-[19px]">
+            <p className="max-w-130 text-lg leading-relaxed font-light text-muted text-pretty sm:text-[19px] poster:max-md:text-[clamp(0.875rem,min(3.9vw,2svh),1.0625rem)] poster:max-md:leading-snug">
               {hero.subline}
             </p>
 
-            <div className="mt-1.5 flex flex-wrap items-center gap-5 font-mono text-xs tracking-[0.14em] uppercase">
+            <div className="mt-1.5 flex flex-wrap items-center gap-5 font-mono text-xs tracking-[0.14em] uppercase poster:max-md:mt-0 poster:max-md:gap-x-4 poster:max-md:gap-y-1 poster:max-md:tracking-[0.06em]">
               <a
                 href={hero.cta.href}
-                className="rounded-full bg-fg px-8 py-4 text-bg transition-opacity hover:opacity-80"
+                className="rounded-full bg-fg px-8 py-4 text-bg transition-opacity hover:opacity-80 poster:max-md:px-5 poster:max-md:py-3"
               >
                 {hero.cta.label}
               </a>
               <a
                 href={`mailto:${site.email}`}
-                className="py-1 text-muted normal-case transition-colors hover:text-accent"
+                className="py-1 text-muted normal-case transition-colors hover:text-accent poster:max-md:[@media(max-height:600px)]:hidden"
               >
                 {site.email}
               </a>
@@ -131,7 +140,7 @@ export function Hero() {
             progress={posterProgress}
             boxRef={boxRef}
             stillRef={stillRef}
-            className="w-full max-w-2xl justify-self-center poster:portrait:max-w-[46rem]"
+            className="w-full max-w-2xl justify-self-center poster:portrait:max-w-[46rem] poster:max-md:-mx-6 poster:max-md:w-[calc(100%+3rem)] poster:max-md:max-w-none sm:poster:max-md:-mx-gutter sm:poster:max-md:w-[calc(100%+5rem)]"
           />
         </div>
 
@@ -140,11 +149,11 @@ export function Hero() {
         <div
           ref={bandRef}
           aria-hidden="true"
-          className="absolute bottom-0 -left-[50vw] hidden h-(--band-h) w-[200vw] items-center overflow-hidden bg-fg poster:flex"
+          className="absolute bottom-0 -left-[50vw] hidden h-[calc(var(--band-h)+var(--bar))] w-[200vw] items-start overflow-hidden bg-fg poster:flex"
         >
           <div
             ref={bandRunRef}
-            className="shrink-0 font-display text-[calc(var(--band-h)*0.58)] leading-none font-extrabold tracking-[-0.02em] whitespace-nowrap text-bg uppercase"
+            className="flex h-(--band-h) shrink-0 items-center font-display text-[calc(var(--band-h)*0.58)] leading-none font-extrabold tracking-[-0.02em] whitespace-nowrap text-bg uppercase"
           >
             {BAND_RUN}
           </div>

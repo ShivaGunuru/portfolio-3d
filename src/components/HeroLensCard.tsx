@@ -18,13 +18,14 @@ function Card() {
             {/* One line per title, sized by width as well as height so the
                 longest ("Feature-Benefit Translator") fits a 769px window;
                 height-only sizing wrapped titles and pushed the last one off
-                the bottom. Starts below its line; useHeroCamera raises it. An inline
+                the bottom. On a phone no size fits it on one line and stays
+                readable, so there titles wrap. Starts below its line; useHeroCamera raises it. An inline
                 transform rather than a translate utility, because Tailwind's
                 translate utilities set the separate `translate` property,
                 which would stack on top of the transform written each frame. */}
             <span
               data-lens-title
-              className="block font-display text-[clamp(1.5rem,min(3.3vw,6.4svh),5rem)] leading-[1.06] font-extrabold tracking-[-0.02em] whitespace-nowrap text-bg uppercase"
+              className="block font-display text-[clamp(1.5rem,min(3.3vw,6.4svh),5rem)] leading-[1.06] font-extrabold tracking-[-0.02em] whitespace-nowrap text-bg uppercase max-md:text-[clamp(1.5rem,8vw,2.5rem)] max-md:whitespace-normal"
               style={{ transform: 'translateY(100%)' }}
             >
               {project.title}
@@ -50,7 +51,7 @@ function Card() {
  */
 export function HeroLensCard({ cardRef }: { cardRef: RefObject<HTMLDivElement | null> }) {
   return createPortal(
-    <div ref={cardRef} aria-hidden="true" className="pointer-events-none fixed inset-0 z-40 hidden">
+    <div ref={cardRef} aria-hidden="true" className="pointer-events-none fixed inset-0 z-40 hidden max-md:bottom-auto max-md:h-lvh">
       {Array.from({ length: STRIPS }, (_, i) => (
         <div
           key={i}

@@ -1,6 +1,6 @@
-import { Suspense, lazy, useEffect, useState, type RefObject } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState, type RefObject } from 'react'
 
-import { useIsCompact } from '../hooks/useIsCompact'
+import { PHONE_QUERY, useIsCompact } from '../hooks/useIsCompact'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 
 /**
@@ -28,9 +28,9 @@ interface StageProps {
  *    stage, wrapper included, would collapse the grid column until the chunk
  *    resolved and then push the layout sideways on arrival.
  *
- *  - Nothing is imported at all on compact screens, so a phone never downloads
- *    three.js. That is the difference between a lighter mobile experience and
- *    a desktop scene that merely renders nothing after paying for itself.
+ *  - Nothing is imported at all on compact screens, which never show it, and
+ *    an upright phone imports three.js only when this box nears the viewport,
+ *    so a visitor who never reaches About never pays for it.
  */
 export function Stage({ progress, className }: StageProps) {
   const reducedMotion = usePrefersReducedMotion()
@@ -38,9 +38,23 @@ export function Stage({ progress, className }: StageProps) {
   // Held back until the browser is idle, so the 3D chunk never competes with
   // fonts, copy and first paint for bandwidth.
   const [mayLoad, setMayLoad] = useState(false)
+  const boxRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (isCompact) return
+
+    if (window.matchMedia(PHONE_QUERY).matches) {
+      const box = boxRef.current
+      if (!box) return
+      const io = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) setMayLoad(true)
+        },
+        { rootMargin: '100% 0px' },
+      )
+      io.observe(box)
+      return () => io.disconnect()
+    }
 
     type IdleWindow = Window & {
       requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number
@@ -65,7 +79,7 @@ export function Stage({ progress, className }: StageProps) {
   if (isCompact) return null
 
   return (
-    <div className={className} aria-hidden="true">
+    <div ref={boxRef} className={className} aria-hidden="true">
       {mayLoad && (
         <Suspense fallback={null}>
           <HeadStage

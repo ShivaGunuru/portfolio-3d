@@ -33,8 +33,29 @@ describe('hero cutout assets', () => {
     expect(webpHasAlpha('../assets/hero-cutout.webp')).toBe(true)
   })
 
+  it('ships the phone sprite with an alpha channel', () => {
+    expect(webpHasAlpha('../assets/hero-cutout-phone.webp')).toBe(true)
+  })
+
+  it('keeps the phone sprite within what a phone can hold', () => {
+    const phone = JSON.parse(read('../assets/hero-cutout-phone.json').toString())
+    const desktop = JSON.parse(read('../assets/hero-cutout.json').toString())
+    // iOS decodes images over 16.7 MP at reduced size.
+    expect(phone.columns * phone.frameWidth * phone.rows * phone.frameHeight).toBeLessThan(16_700_000)
+    // The reserved box takes its aspect ratio from the desktop manifest.
+    expect([phone.frameWidth, phone.frameHeight]).toEqual([desktop.frameWidth, desktop.frameHeight])
+  })
+
   it('ships the lens still with an alpha channel', () => {
     expect(webpHasAlpha('../assets/hero-lens-still.webp')).toBe(true)
+  })
+
+  it('never crops frames from an <img>, which re-decodes the sheet per call', () => {
+    // 96 full decodes froze the main thread for 75s at load, past the
+    // preloader's own cap, because a blocked thread cannot run its timer.
+    const source = read('../hooks/useHeroCutout.ts').toString()
+    expect(source).toMatch(/createImageBitmap\(blob\)/)
+    expect(source).not.toMatch(/createImageBitmap\(\s*img/)
   })
 
   it('composites the portrait without multiply anywhere', () => {

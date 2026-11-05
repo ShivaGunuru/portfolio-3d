@@ -57,7 +57,8 @@ export function startPreloader(): void {
   const tasks: Promise<unknown>[] = [document.fonts.ready, windowLoaded()]
   // Same breakpoint as HeroCutoutStage. On compact screens the Hero visual never
   // mounts, so waiting for its sprite would delay the reveal for nothing and
-  // spend a phone's data on a multi-megabyte image it will never show.
+  // spend data on an image it will never show. Upright phones are not compact:
+  // loadHeroCutout gives them their own, lighter sprite.
   if (!window.matchMedia(COMPACT_QUERY).matches) {
     tasks.push(loadHeroCutout())
     // The zoom's hi-res still, fetched and decoded before the reveal, so the

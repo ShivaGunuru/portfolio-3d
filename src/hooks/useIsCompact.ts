@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
 
 /**
- * Where every pinned visual on the site is dropped: narrow screens, and short
- * ones. Width alone used to decide this, which handed landscape phones
- * (844x390 and the like) the full desktop Hero on a screen too short to hold
- * it: the copy overflowed the band by 266px.
+ * Where the Hero and About visuals are dropped: short screens, and narrow ones
+ * held sideways. Neither can hold the poster: a landscape phone (844x390) once
+ * got it, with the copy 266px under the band.
  *
  * This is the single source for the breakpoint. The CSS side is the `poster`
  * custom variant in index.css, which must stay its exact complement; the
@@ -13,17 +12,33 @@ import { useEffect, useState } from 'react'
  * exactly 768, which once left the iPad mini with the poster's band but no
  * portrait and no pin.
  */
-export const COMPACT_QUERY = '(max-width: 767.98px), (max-height: 540px)'
+export const COMPACT_QUERY = '(max-height: 540px), (max-width: 767.98px) and (orientation: landscape)'
 
-export function useIsCompact(): boolean {
-  const [compact, setCompact] = useState(() => window.matchMedia(COMPACT_QUERY).matches)
+/**
+ * Upright phones: they get the whole Hero sequence, on a lighter path (a
+ * 48-frame sprite, `position: sticky` instead of a GSAP pin, fewer About
+ * points). In CSS this is `poster:max-md:`.
+ */
+export const PHONE_QUERY = '(max-width: 767.98px) and (orientation: portrait) and (min-height: 540.02px)'
+
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches)
 
   useEffect(() => {
-    const mql = window.matchMedia(COMPACT_QUERY)
-    const sync = () => setCompact(mql.matches)
+    const mql = window.matchMedia(query)
+    const sync = () => setMatches(mql.matches)
+    sync()
     mql.addEventListener('change', sync)
     return () => mql.removeEventListener('change', sync)
-  }, [])
+  }, [query])
 
-  return compact
+  return matches
+}
+
+export function useIsCompact(): boolean {
+  return useMediaQuery(COMPACT_QUERY)
+}
+
+export function useIsPhone(): boolean {
+  return useMediaQuery(PHONE_QUERY)
 }

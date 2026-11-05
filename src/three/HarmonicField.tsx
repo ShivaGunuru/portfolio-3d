@@ -17,10 +17,13 @@ import {
   sampleMorphFit,
 } from './harmonicGeometry'
 import { harmonicFragmentShader, harmonicVertexShader } from './harmonicShaders'
+import { PHONE_QUERY } from '../hooks/useIsCompact'
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 
 const POINT_COUNT = 42000
+/** The same density in an upright phone's much smaller box (342px against 561px). */
+const PHONE_POINT_COUNT = 16000
 
 interface HarmonicFieldProps {
   baseColor: string
@@ -61,7 +64,11 @@ export function HarmonicField({
   const smoothMorph = useRef(0)
 
   const data = useMemo(
-    () => buildHarmonicField(POINT_COUNT, baseColor),
+    () =>
+      buildHarmonicField(
+        window.matchMedia(PHONE_QUERY).matches ? PHONE_POINT_COUNT : POINT_COUNT,
+        baseColor,
+      ),
     [baseColor],
   )
 

@@ -21,7 +21,7 @@ interface LoaderProps {
 }
 
 /** Split out so `useHeroCutout` (and the fetch it starts on mount) only
- *  exists above the mobile breakpoint. A hook can't be called conditionally
+ *  exists where the portrait shows. A hook can't be called conditionally
  *  within one component; mounting this component conditionally is the same
  *  gate applied at the tree level instead. */
 function HeroCutoutLoader({ progress, still }: LoaderProps) {
@@ -58,10 +58,8 @@ interface HeroCutoutStageProps {
  * The preloader (src/preloader/run.ts) has usually started that download
  * already; `useHeroCutout` memoises it, so this picks up the same promise.
  *
- * Hidden entirely on compact screens (narrow or short; see useIsCompact),
- * matching every other pinned visual on this site: pinning plus a mobile
- * browser's address-bar show/hide resize is a well-known source of jank,
- * independent of what's being pinned.
+ * Hidden entirely on compact screens (short ones, and narrow ones held
+ * sideways; see useIsCompact), which cannot hold the poster.
  *
  * The portrait is a true cut-out (transparent background, see
  * src/dev/grade-to-white.py) drawn with ordinary blending over the giant
