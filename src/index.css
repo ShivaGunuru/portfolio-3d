@@ -76,6 +76,17 @@
   }
 }
 
+/* Hairline figure (About). The plate must be the page colour: plates are
+   filled so they hide strokes behind them. Strokes use the ink scale. */
+.hairline-figure {
+  --hairline-plate: var(--color-bg);
+  --hairline-hi: var(--color-fg);
+  --hairline-edge: var(--color-body);
+  --hairline-mid: var(--color-faint);
+  --hairline-lo: var(--color-edge);
+  --hairline-stroke: 1;
+}
+
 @layer base {
   html {
     /* Lenis owns smooth scrolling and writes scrollTop every frame. Leaving

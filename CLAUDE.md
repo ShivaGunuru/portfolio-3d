@@ -188,45 +188,16 @@ Same lesson as the aspect ratio above: **anything that depends on the crop must 
 
 **Hero's grid column split favours the visual side** (`md:grid-cols-[1fr_1.2fr]` in `Hero.tsx`, not an even `grid-cols-2`), a direct response to "keep it a bit bigger... rather than floating." The text column doesn't need the space it gave up: its content already sits well under its own `max-w-160`, so narrowing the column slightly doesn't change how the copy wraps.
 
-### The About field
+### The About figure
 
-Files: `harmonicGeometry.ts` (seeds, parameter sets, fit scale), `harmonicShaders.ts`, `HarmonicField.tsx`, rendered through `src/three/Stage.tsx` → `HeadStage.tsx`, which now only ever mounts this one scene.
+About shows **Hairline's `exploded` figure** (`@lucasmarkes/hairline`, MIT, no dependencies): an app window in four line-drawn layers that open as the pointer moves across. It replaced the WebGL spherical-harmonic point field at the owner's request, which also removed three.js, R3F and drei from the site. If you find `HarmonicField`, `HeadStage`, `Stage.tsx` or `harmonic*` files, they are stale.
 
-**The harmonic form is solved per frame, never stored.** Each point knows only its angle on a Fibonacci-lattice sphere; position comes from `r = sin(m0 phi)^m1 + cos(m2 phi)^m3 + sin(m4 theta)^m5 + cos(m6 theta)^m7`, and scroll interpolates the eight numbers between two sets. A is a sphere, B is a four-pointed star, so the scroll reads as a system resolving out of a ball into structure.
+- **Import the plain-JS entry, never `@lucasmarkes/hairline/react`.** The React entry bundles all 33 figures: the main chunk went from 158 KB to 280 KB. The plain entry tree-shakes to the one figure (+16 KB). `ExplodedFigure` in `About.tsx` mounts it in an effect and calls `destroy()` on unmount.
+- **`play: true`** walks the figure on its own until the pointer arrives. Phones have no hover, so without it they would only ever see it still. The library handles reduced motion itself.
+- **Colours come from the `hairline-*` custom properties on `.hairline-figure` in `index.css`**, mapped to site tokens. `--hairline-plate` must stay the page colour, because plates are filled to hide strokes behind them.
+- The box is `aspect-[5/4]`, the figure's own ratio, so nothing shifts when it draws. About is no longer pinned.
 
-**Exponents are the load-bearing part, and there is a window.** Near 1 the four terms sum into a fuzzy ball that fills the frame as noise. At 6, which an earlier revision used almost throughout, the lobes are carved so hard that equal-area sphere sampling stretches them into thin radiating sprays: the field read as a firework, and that was most of why it looked amateurish. 2 to 4 keeps the surface closed and legible. **If this field ever looks like a splatter again, look at the exponents before anything else.**
-
-**Scale is fitted per morph, from a precomputed table.** `buildMorphFitTable` builds 17 fit scales at mount and `sampleMorphFit` interpolates between them each frame. One scale spanning the whole morph renders the smaller-radius endpoint smaller, so the form swells as it reorganises rather than just changing shape. Fitting per frame is not available: one fit costs 2.37ms against a 16.7ms budget. Use `harmonicFitScaleAt`, not `harmonicFitScale`, for a single shape: the latter walks five morph steps and, handed one set twice, scans the same shape six times. Verified: zero frame-edge contact across the morph, and both endpoints fit to the same maximum radius.
-
-**That is not the same as a constant on-screen size, and no code here claims it is.** The fit normalises the form's maximum radius, not its projected on-screen size, and how much of that radius survives projection still shifts with the shape. Measured: the projected bounding box runs about 90% of the frame at morph 0 down to about 70% at morph 1, a residual 1.44x variation across the morph. That is a known property of max-radius fitting, not a bug. It is an improvement over the previous single-scale approach, which varied 1.70x, not a solved problem.
-
-**Every point is one colour, and that is deliberate.** An earlier revision recoloured 14% of points to the accent so the highlight would "read as sparkle through the volume". That worked on a near-black page. On white, randomly placed coloured specks read as dirt, and this is the single change that most made the field look unfinished. Emphasis is the cursor's job. `src/__tests__/harmonicGeometry.test.ts` guards it.
-
-**Depth is cued by alpha, not by perspective.** The camera sits at z 7.3 and the form is fitted to radius 1.55, so perspective varies point size by roughly 25% across the depth range, which reads as nothing. A `vDepth` varying fades the far side toward the page instead, and it is the difference between 42,000 dots as a flat speckle field and as a volume.
-
-**Points on the radius floor are faded out.** `harmonicRadius` floors at 0.12, and every angle where all four terms cancel lands there, piling a dark knot at the origin. `smoothstep(0.13, 0.45, r)` on `vTone` removes it. They carry no shape information, so nothing is lost.
-
-**The field sits on the page, with no backdrop.** `About.tsx` deliberately carries no `bg-bg-soft`: a soft-cloud rectangle puts a hard edge around a form that is supposed to be points in space. `--color-bg-soft` currently has no consumer in `src/` at all.
-
-`harmonicGeometry.ts` and `HarmonicField.tsx` differ only in casing from each other's original names; the data module was renamed for exactly that reason, since a case-insensitive filesystem collides on it.
-
-**Point size must be set against the 1px floor, not by eye.** `gl_PointSize` is clamped to `ALIASED_POINT_SIZE_RANGE`, whose minimum is 1. At the stage's real scale (`uScale = canvasHeight * dpr / 2`, about 491 for a 561px box) a `uSize` of 0.0135 works out to 0.91px, so every point clamped to 1px and the tone-driven size modulation became inert regardless of point count. **Always check the pixel size before adding points if this field ever looks dim.**
-
-**All per-point motion is in the vertex shader, not JavaScript.** The reference implementation in `docs/direction/` mutates thousands of positions in a JS loop every frame; that does not hold 60fps once cursor response is added on top. Measured on Intel UHD 620: 60fps steady at 26,000+ points, hovering adds no measurable cost. **Do not move per-point work back into JS.**
-
-**The cursor test happens in NDC, not world space.** It matches what the user sees on screen rather than what is near in 3D.
-
-**Every canvas must stay `pointer-events: none`,** including the inline `style` passed to `<Canvas>` — R3F writes `pointer-events: auto` on its own container and will otherwise swallow clicks near it. Cursor position comes from a `window` listener, so hover works without the canvas intercepting anything.
-
-**Glow is done in-shader**, via a radial falloff and a colour shift toward `head-glow` near the cursor. There is no postprocessing pass and no bloom dependency.
-
-**The material blends normally, not additively, and that is not a style choice.** Additive blending only ever *adds* to the framebuffer, so on this section's near-white backdrop it is a mathematical no-op: measured, pure black points at three different sizes left 0% of pixels distinguishable from the background. It was the right mode while the page was near-black and points accumulated into light. **If this field ever looks invisible or washed out, check the blend mode before touching any colour** — no token value can compensate.
-
-**Three constants downstream of the blend equation were tuned for additive light and had to change with it.** Near-cursor emphasis now rides on alpha, because the old `color *= 1.0 + vGlow * 2.0` overdrive accumulated as glow before and merely clips to white now. The near-cursor point-size boost dropped from 2.4 to 0.8, because under alpha blending overlapping points produce flat coverage rather than brighter light, so the highlight rendered as a hard-edged disc with no points visible in it.
-
-**`uPush` is 0, for the same reason the Hero head's was.** The displacement is radially outward from the cursor, so any positive value evacuates the middle of the influence circle and the hover reads as a ring with a hole rather than as a highlight. On the old dark page that hole was just more background; on white it is a stark white disc ringed in amber. **This is the second time this shape has been rediscovered by rendering it. Do not raise `uPush` without looking at the result.**
-
-**`reducedMotion` holds a representative form rather than animating**, via the same `still` prop pattern as the Hero cutout.
+The `head-fg` and `head-glow` tokens are left over from the point field and currently unused (palette.test.ts still checks they exist).
 
 ### The preloader
 

@@ -1,8 +1,7 @@
-import { Fragment, useRef } from 'react'
+import { Fragment, useEffect, useRef } from 'react'
+import { exploded } from '@lucasmarkes/hairline'
 
 import { about } from '../../content/site'
-import { usePinnedStage } from '../../hooks/usePinnedStage'
-import { Stage } from '../../three/Stage'
 import { Reveal } from '../Reveal'
 import { SectionHeading } from '../SectionHeading'
 
@@ -32,15 +31,27 @@ function withHandleLink(paragraph: string) {
   )
 }
 
-export function About() {
-  const sectionRef = useRef<HTMLElement>(null)
-  const progress = usePinnedStage(sectionRef)
+/**
+ * The plain-JS entry, not `@lucasmarkes/hairline/react`: the React entry pulls
+ * in all 33 figures (main bundle 158 KB to 280 KB), while this one keeps only
+ * the figure used.
+ */
+function ExplodedFigure() {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!ref.current) return
+    const figure = exploded(ref.current, { play: true, intensity: 0.6 })
+    return () => figure.destroy()
+  }, [])
+  // aspect-[5/4] reserves the figure's box before it draws: no layout shift.
+  return <div ref={ref} className="hairline-figure aspect-[5/4] w-full max-w-xl justify-self-center" />
+}
 
+export function About() {
   return (
     <section
       id="about"
       aria-labelledby="about-heading"
-      ref={sectionRef}
       className="page-shell relative z-10 overflow-hidden py-30"
     >
       <SectionHeading
@@ -65,14 +76,12 @@ export function About() {
           ))}
         </Reveal>
 
-        {/* No bg-bg-soft. The field is points on a page, not a photograph on a
-            backdrop: a soft-cloud rectangle put a hard edge around it and drew
-            a box where the design wants none. The Hero cutout dropped the same
-            class for a different reason, and this section now matches it. */}
-        <Stage
-          progress={progress}
-          className="aspect-square w-full max-w-xl justify-self-center"
-        />
+        {/* An app window in four layers (Hairline's Exploded): moving across
+            opens the gap, moving down picks a layer. `play` walks it on its own
+            until the pointer arrives, which is the only way a phone, with no
+            hover, sees it move. Colours come from the hairline-* properties in
+            index.css. It reserves its own 5:4 box, so nothing shifts on load. */}
+        <ExplodedFigure />
       </div>
     </section>
   )
